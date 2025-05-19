@@ -71,9 +71,9 @@ def diffusion_train(args, round, dataset):
     logger.info(f"Overrides: {overrides}")
     ##############################################################################
     # Update sequence_preprocessed_dataset.tsv from dataset argument
-    sequence_data_path = preprocessing.get_file_path(which_file='preprocessed_dataset',
-                              which_dataset=cfg.data.which_dataset,  
-                              base_dir=cfg.base_dir)
+    # sequence_data_path = preprocessing.get_file_path(which_file='preprocessed_dataset',
+    #                           which_dataset=cfg.data.which_dataset,  
+    #                           base_dir=cfg.base_dir)
     print(cfg.base_dir)
     print(cfg.data.which_dataset)
     sequences = dataset.train
@@ -83,6 +83,7 @@ def diffusion_train(args, round, dataset):
     
     for seq, score in zip(sequences, scores):
         seq_str = ''.join([str(i) for i in seq])
+        # seq_str = ''.join(map(str,[str(i) for i in seq]))
         tsv_data.append({'sequence': seq_str, 'reward': float(score)})
         
     df = pd.DataFrame(tsv_data)

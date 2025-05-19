@@ -29,9 +29,11 @@ def diffusion_sample(args, oracle, round, dataset):
     # parser.add_argument('-o', '--overrides',                  type=str, default='',    help='[Optional] Which configs (in the config file) to override (pass configuration names and override-values in the format "<config-name-1>=<config-value-1>|<config-name-2>=<config-value-2>"). If this argument is not passed, no configurations will be overriden.')
     # args = parser.parse_args()
     # args = defaultdict()
-    args.config = './config_files/generation_defaults.yaml'
+    args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
     args.num_valid_molecule_samples = 500
     args.property_name_value = 'reward=1.0'
+    # 가장 최근이나 seed별로 원하는 모델을 유동적으로 지정할 수 있게 추후 수정
+    # 이걸 넣으면 path가 꼬이네
     args.overrides = ''
     
     # Strip potenial '"' at beginning and end of args.overrides
@@ -76,8 +78,9 @@ def diffusion_sample(args, oracle, round, dataset):
     save_location = str(Path(generation_cfg.base_dir, 'generated'))
     # run_folder_name = num_rings1|n=1000
     run_folder_name = f"{run_folder_name_property_prefix}|n={num_uvnswcs_requested}"
-    if args.overrides!='':
-        run_folder_name += f"|{args.overrides}"
+    # 이건 path가 이상해져서 생략
+    # if args.overrides!='':
+    #     run_folder_name += f"|{args.overrides}"
     outputs_dir = bookkeeping.create_run_folder(save_location, run_folder_name, include_time=False)
 
     # Define a logger
@@ -150,7 +153,7 @@ def diffusion_sample(args, oracle, round, dataset):
     sampled_uvnswcs_list = list() # Keep track of the sampled unique valid nswcs (uvnswcs)
     generated_df_list    = list()
     global_start_time    = time.time()
-    logger.info(f"Will generate layout are at least {num_uvnswcs_requested} layouts (i.e. nswcs) have been sampled.")
+    logger.info(f"Will generate sequences are at least {num_uvnswcs_requested} sequences have been sampled.")
     for iteration in range(generation_cfg.sampler.max_iterations):
         # If no property is specified, use unconditional sampling
         if target_property_value is None:
@@ -169,6 +172,7 @@ def diffusion_sample(args, oracle, round, dataset):
                 err_msg = f"There is no predictor model with name '{predictor_model_name}'. Allowed predictor models are: {list(orchestrator.manager.models_dict.keys())}"
                 raise ValueError(err_msg)
 
+            # 현재시각 20:48 여기까지 왔다.
             # Here we use generation cfg
             x_generated = eval_manager.generate(num_samples=generation_cfg.sampler.batch_size, #500, 
                                                 seed=None, # Only use the external seed

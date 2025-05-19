@@ -49,28 +49,28 @@ data:
                 stratify: False                                             # Should subsampling be stratified w.r.t. the property?
                 use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
                 seed: 100                                                   # Seed for subsampling
-            waiting_time:
-                fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-                # stratify, use_max_num_bins
-                stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-                # datahandling.py
-                use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
-                seed: 100                                                   # Seed for subsampling
-            num_rings:
-                fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-                stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-                use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
-                seed: 100                                                   # Seed for subsampling
-            logp:
-                fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-                stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-                use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
-                seed: 101                                                   # Seed for subsampling
-            num_heavy_atoms:
-                fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-                stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-                use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
-                seed: 102                                                   # Seed for subsampling
+            # waiting_time:
+            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
+            #     # stratify, use_max_num_bins
+            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
+            #     # datahandling.py
+            #     use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
+            #     seed: 100                                                   # Seed for subsampling
+            # num_rings:
+            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
+            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
+            #     use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
+            #     seed: 100                                                   # Seed for subsampling
+            # logp:
+            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
+            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
+            #     use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
+            #     seed: 101                                                   # Seed for subsampling
+            # num_heavy_atoms:
+            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
+            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
+            #     use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
+            #     seed: 102                                                   # Seed for subsampling
 
                 # logp:
             #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
@@ -178,14 +178,14 @@ training:
     denoising_model:
         optimizer: 'Adam'           # Optimizer to be used
         lr: 0.001                  # Learning rate to be used
-        num_epochs: 100             # Number of epochs to be trained for
+        num_epochs: 1             # Number of epochs to be trained for
         clip_grad: False             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
     reward_predictor_model:
         optimizer: 'Adam'           # Optimizer to be used
         lr: 0.0001                  # Learning rate to be used
-        num_epochs: 50              # Number of epochs to be trained for
+        num_epochs: 5             # Number of epochs to be trained for
         clip_grad: True             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)

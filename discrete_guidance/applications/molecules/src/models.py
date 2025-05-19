@@ -827,7 +827,7 @@ class NormalPredictorGuideModel(torch.nn.Module):
         plt.xlabel('t')
         plt.ylabel('sigma(t)')
         plt.xlim([0, 1])
-        plt.ylim([0, max(utils.to_numpy(sigma_t))*1.05])
+        # plt.ylim([0, max(utils.to_numpy(sigma_t))*1.05])
         plt.show()
         return fig
 
@@ -857,10 +857,14 @@ class NormalPredictorGuideModel(torch.nn.Module):
         
         """
         y_data = batch_data_t[self.y_guide_name]
-
+ 
         # Determine the class-probabilities
         y_pred = self.forward(batch_data_t, t, is_x_onehot=is_x_onehot) # Shape (B, #classes)
-
+       
+        print(t)
+        print(self.get_sigma_t(t))
+        print('#'*50)
+        assert False
         # Determine sigma(t) and log(sigma(t))
         sigma_t     = self.get_sigma_t(t).squeeze()+self.eps
         log_sigma_t = torch.log(sigma_t)
@@ -868,6 +872,7 @@ class NormalPredictorGuideModel(torch.nn.Module):
         # Calculate the log_prob per point
         square_diff = (y_data.squeeze()-y_pred.squeeze())**2/(2*sigma_t**2)
         log_prob = -square_diff-log_sigma_t-np.sqrt(2*np.pi)
+
 
         return log_prob
     

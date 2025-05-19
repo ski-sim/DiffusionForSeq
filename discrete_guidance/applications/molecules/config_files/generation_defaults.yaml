@@ -8,7 +8,8 @@ base_dir: '.'
 # Relative path to the train folder (with the model weights etc.) used to load models for generation:
 # trained_run_folder_dir: './trained/CTFM'
 # 이걸 유동적으로 바꿔야겠는데
-trained_run_folder_dir: './trained/2025-04-29/no_overrides'
+# trained_run_folder_dir: './trained/2025-04-29/no_overrides'
+trained_run_folder_dir: './trained/2025-05-19/no_overrides'
 # /home/son9ih/discrete_guidance/applications/molecules/trained/2025-02-09/no_overrides/models_saved
 
 # Specify the sampler specific configurations

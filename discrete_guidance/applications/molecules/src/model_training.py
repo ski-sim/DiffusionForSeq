@@ -88,6 +88,7 @@ def train_model(manager:object,
         batch_train_loss_list = list()
         for batch_train_data in train_dataloader:
             # Train on the batch for the specified model
+        
             training_state = manager.train_on_batch(
                 batch_train_data, 
                 which_model, 
@@ -105,7 +106,7 @@ def train_model(manager:object,
         # 
         epoch_train_loss = np.mean(np.array(batch_train_loss_list))
         epoch_train_loss_list.append(epoch_train_loss)
-
+        print(f"Epoch {epoch} | Train loss: {epoch_train_loss}")
         # Determine the loss on the validation set for the epoch if the 
         # validation dataloader has been defined (i.e. is not None)
         # calculate the validation loss once for each epoch
@@ -119,6 +120,8 @@ def train_model(manager:object,
                 eval_output = manager.eval_loss_on_batch(
                     batch_valid_data, 
                     which_model)
+                print(eval_output)
+                assert False
                 batch_valid_loss_list.append(eval_output['loss'])
 
             # Average the validation losses in the batch thereby determining the total validation
@@ -165,7 +168,7 @@ def train_model(manager:object,
         
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
-        plt.ylim([y_min, y_max])
+        # plt.ylim([y_min, y_max])
         plt.show()
 
         if figs_save_dir is not None:

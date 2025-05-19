@@ -437,6 +437,7 @@ def get_guided_rates(
     # Note this doesn't deal with the diagonals
     R_t = R_t * prob_ratio
 
+    # predictor가 Nan을 반환해서 여기서 ValueError가 발생한 것 같다. 
     if R_t.isnan().any():
         raise ValueError(f"The rate matrix 'R_t' contains NaNs.")
 
@@ -622,10 +623,9 @@ def predictor_loss_masking(
     B, D = x1.shape
     # Sample continuous time point
     t = torch.rand((B,)).to(x1.device)
-
+    
     # Sample xt by masking x1 according to time t
     xt = sample_xt(x1, t, mask_idx, pad_idx)
-
     # The model outputs logits over number of classes
     if reduction == "mean":
         return -torch.mean(predictor_log_prob_y(y, xt, t))

@@ -698,7 +698,7 @@ def train(args, oracle, dataset):  # runner.run()
         # sequence_preprocessed_data.tsv위치에 저장한다. round를 인자로 줬으니, dataset을 iter로 
         # 구분할 수 있게 되면 좋겠지 
         print(f"+++++++++++++++++++Iteration {round+1} starts+++++++++++++")
-        diffusion_train(args, round, dataset)
+        # diffusion_train(args, round, dataset)
         print("+++++++++++++++++++diffusion training done+++++++++++++")
         predictor_train(args, round, dataset)
         print("+++++++++++++++++++predictor training done+++++++++++++")

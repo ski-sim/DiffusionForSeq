@@ -58,9 +58,14 @@ def load_preprocessed_dataset(which_dataset:str,
 
     """
     # Determine the (absolute) file path
-    file_path = get_file_path(which_file='preprocessed_dataset',
-                              which_dataset=which_dataset,  
-                              base_dir=base_dir)
+    # file_path = get_file_path(which_file='preprocessed_dataset',
+    #                           which_dataset=which_dataset,  
+    #                           base_dir=base_dir)
+    # print('#####################################################')
+    # print(file_path)
+    
+    file_path = '../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.tsv'
+    
     
     # Either load or create (and save) the preprocessed dataset
     if os.path.isfile(file_path):

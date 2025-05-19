@@ -27,7 +27,8 @@ def predictor_train(args, round, dataset):
     # parser.add_argument('-o', '--overrides', type=str, default='',    help='[Optional] Which configs (in the config file) to override (pass configuration names and override-values in the format "<config-name-1>=<config-value-1>|<config-name-2>=<config-value-2>"). If this argument is not specified, no configurations will be overriden.')
     # args = parser.parse_args()
     # args = defaultdict()
-    args.config = './config_files/training_defaults_sequence.yaml'
+    # args.config = './config_files/training_defaults_sequence.yaml'
+    args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
     args.model = 'reward_predictor_model'
     args.overrides = ''
 

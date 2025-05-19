@@ -213,19 +213,21 @@ class Orchestrator(object):
         # modified
         ## waiting_time predictor model
         # Define the model
-        utils.set_random_seed(cfg.waiting_time_predictor_model.init_seed)
-        waiting_time_predictor_model = models.NormalPredictorGuideModel(model_cfg=cfg.waiting_time_predictor_model, 
+        # 이걸 reward_predictor_model로 바꿔야함
+        utils.set_random_seed(cfg.reward_predictor_model.init_seed)
+        # 여기까지 됐고
+        reward_predictor_model = models.NormalPredictorGuideModel(model_cfg=cfg.reward_predictor_model, 
                                                                 general_cfg=cfg, 
                                                                 time_encoder=time_encoder,
-                                                                sigma_noised=cfg.data.train_property_sigma_dict['waiting_time'],
+                                                                sigma_noised=cfg.data.train_property_sigma_dict['reward'],
                                                                 logger=logger)
         # Define the optimizer
         if load_data:
-            optimizer_handle         = getattr(torch.optim, cfg.training.waiting_time_predictor_model.optimizer)
-            waiting_time_predictor_optimizer = optimizer_handle(waiting_time_predictor_model.parameters(), 
-                                                        lr=cfg.training.waiting_time_predictor_model.lr)
+            optimizer_handle         = getattr(torch.optim, cfg.training.reward_predictor_model.optimizer)
+            reward_predictor_optimizer = optimizer_handle(reward_predictor_model.parameters(), 
+                                                        lr=cfg.training.reward_predictor_model.lr)
         else:
-            waiting_time_predictor_optimizer = None
+            reward_predictor_optimizer = None
 
         # modified
         ## Define the predictor models
@@ -243,9 +245,9 @@ class Orchestrator(object):
             #     'model': num_heavy_atoms_predictor_model,
             #     'optimizer': num_heavy_atoms_predictor_optimizer, 
             # },
-            'waiting_time_predictor_model': {
-                'model': waiting_time_predictor_model,
-                'optimizer': waiting_time_predictor_optimizer, 
+            'reward_predictor_model': {
+                'model': reward_predictor_model,
+                'optimizer': reward_predictor_optimizer, 
             },
         }
 
@@ -285,6 +287,7 @@ class Orchestrator(object):
             (object): Orchestrator object created from the run folder.
         
         """
+        print(f"run_folder_dir: {run_folder_dir}")
         # Check that the run folder exists
         if os.path.isdir(run_folder_dir)==False:
             err_msg = f"No 'run-folder' found in: {run_folder_dir}"
