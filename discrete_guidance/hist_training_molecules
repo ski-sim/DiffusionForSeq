@@ -1,0 +1,794 @@
+(discrete_guidance) (base) son9ih@SILAB-Coyote:~/discrete_guidance/applications/molecules$ CUDA_VISIBLE_DEVICES=0 python scripts/train.py -c ./config_files/training_defaults.yaml -m "all"
+[INFO]: Overrides: {}
+[INFO]: Loaded the 'qmugs' preprocessed dataset from: data/preprocessed/qmugs_preprocessed_dataset.tsv
+[INFO]: Maximum number of tokens (over all nswcs): 100
+[INFO]: Unique tokens (#30): {'H', '4', '-', '5', 'B', 'r', 'c', 'n', 'P', 'C', ']', 'F', 'l', 'o', '=', 's', 'S', 'N', 'O', '3', '[', '#', '(', '1', ')', 'I', '2', '+', '7', '6'}
+[INFO]: #train: 488460
+[INFO]: #validation: 122115
+[INFO]: #train_logp: 488460
+[INFO]: #train_num_heavy_atoms: 488460
+[INFO]: #train_num_rings: 488460
+[INFO]: Stack time to x as denoising model input: False
+[INFO]: Using a normal predictor-guide model for 'num_rings'.
+[INFO]: Stack time to x as num_rings-predictor model input: False
+[INFO]: Stack time to x as logp-predictor model input: False
+[INFO]: Stack time to x as num_heavy_atoms-predictor model input: False
+[INFO]: Using the continuous-time framework (DFM for denoising model and DG for guidance).
+[INFO]: 
+[INFO]: Overriden config: base_dir: .
+checkpoints_dir: trained/2025-02-09/no_overrides/checkpoints
+configs_dir: trained/2025-02-09/no_overrides/configs
+data:
+  S: 32
+  categorical: true
+  dataloaders:
+    train:
+      batch_size: 256
+    validation:
+      batch_size: 256
+  pad_index: 30
+  preprocessing:
+    filter_order:
+    - mol_weight
+    - num_tokens
+    - num_rings
+    - logp
+    filter_range_dict:
+      logp:
+      - -3
+      - 10
+      mol_weight:
+      - 0
+      - 750
+      num_rings:
+      - 0
+      - 7
+      num_tokens:
+      - 0
+      - 100
+    property_data_sampling_dict:
+      logp:
+        fraction: 1.0
+        seed: 101
+        stratify: false
+        use_max_num_bins: false
+      num_heavy_atoms:
+        fraction: 1.0
+        seed: 102
+        stratify: false
+        use_max_num_bins: false
+      num_rings:
+        fraction: 1.0
+        seed: 100
+        stratify: false
+        use_max_num_bins: true
+    random_seed_split: 42
+    torch_data_property_names:
+    - num_rings
+    - logp
+    - num_heavy_atoms
+    validation_train_ratio: 0.2
+  shape: 100
+  train_num_tokens_freq_dict:
+    '10': 0.0001330712852638906
+    '100': 3.27560086803423e-05
+    '11': 0.00015559104123162592
+    '12': 0.00019244155099701102
+    '13': 0.0002559063178151742
+    '14': 0.00041763911067436434
+    '15': 0.0004974818818326987
+    '16': 0.0006264586660115465
+    '17': 0.0007185849404250092
+    '18': 0.0010563812799410392
+    '19': 0.0013470908569790771
+    '20': 0.0016746509437825
+    '21': 0.0021250460631372066
+    '22': 0.0026450477009376406
+    '23': 0.00301150554804897
+    '24': 0.0036666257216558164
+    '25': 0.004540801703312451
+    '26': 0.005367890922491094
+    '27': 0.006231830651435123
+    '28': 0.007562543504074029
+    '29': 0.008770421324161651
+    '3': 4.094501085042788e-06
+    '30': 0.009847275109527903
+    '31': 0.010938459648691806
+    '32': 0.012422716292019817
+    '33': 0.013597838103427098
+    '34': 0.01539532407976088
+    '35': 0.016986037751300004
+    '36': 0.01849281415059575
+    '37': 0.019686361216885724
+    '38': 0.021238177128116938
+    '39': 0.02254841747533063
+    '4': 8.189002170085576e-06
+    '40': 0.023438971461327437
+    '41': 0.024743070056913567
+    '42': 0.026210948695901404
+    '43': 0.02705441591942022
+    '44': 0.027904024894566597
+    '45': 0.02848134954755763
+    '46': 0.02974245588175081
+    '47': 0.02991033042623756
+    '48': 0.03086025467796749
+    '49': 0.031322933300577324
+    '50': 0.030549072595504236
+    '51': 0.03053678909224911
+    '52': 0.030512222085738852
+    '53': 0.029253163002088196
+    '54': 0.028561192318715966
+    '55': 0.02714449494329116
+    '56': 0.025918191868320846
+    '57': 0.024960078614420834
+    '58': 0.02372149203619539
+    '59': 0.02225361339720755
+    '6': 1.2283503255128363e-05
+    '60': 0.020398804405683167
+    '61': 0.01993203128198829
+    '62': 0.018326986856651517
+    '63': 0.016236744052737173
+    '64': 0.015661466650288662
+    '65': 0.014750440158866642
+    '66': 0.013063505711829014
+    '67': 0.012281456004585842
+    '68': 0.011446177783237112
+    '69': 0.010006960651844572
+    '7': 3.0708758137820905e-05
+    '70': 0.00906317815174221
+    '71': 0.008330262457519551
+    '72': 0.00753592924702125
+    '73': 0.006444744707857348
+    '74': 0.005803955288048152
+    '75': 0.0054395446914793436
+    '76': 0.004663636735863735
+    '77': 0.004149776849690865
+    '78': 0.0038979650329607337
+    '79': 0.0032407976088113665
+    '8': 3.27560086803423e-05
+    '80': 0.0028108749948818736
+    '81': 0.002739221225893625
+    '82': 0.0024935511607910577
+    '83': 0.002184416328870327
+    '84': 0.0021168570609671213
+    '85': 0.0019366990132252385
+    '86': 0.001590713671539123
+    '87': 0.0013348073537239487
+    '88': 0.0012856733407034353
+    '89': 0.0011014207918765098
+    '9': 7.779552061581296e-05
+    '90': 0.00092535724521967
+    '91': 0.0008639397289440282
+    '92': 0.00058756090570364
+    '93': 0.0005138598861728699
+    '94': 0.00040740285796175737
+    '95': 0.0003255128362609016
+    '96': 0.00024157556401752447
+    '97': 0.00020881955533718217
+    '98': 0.00015354379068910454
+    '99': 7.574827007329156e-05
+  train_property_sigma_dict:
+    logp: 1.6585117346416896
+    num_heavy_atoms: 7.3592371004691906
+    num_rings: 1.235378277235593
+  which_dataset: qmugs
+denoising_model:
+  activation_fn:
+    name: ReLU
+    params: null
+  eps: 1e-10
+  fix_pads: true
+  hidden_dim: 20000
+  init_seed: 42
+  num_hidden: 2
+  p_dropout: 0.1
+  save_name: denoising_model.pt
+  stack_time: false
+device: cuda
+eps_ratio: 1e-9
+figs_save_dir: trained/2025-02-09/no_overrides/figs_saved
+fix_pads: true
+load_data: true
+logging: true
+logp_predictor_model:
+  activation_fn:
+    name: ReLU
+    params: null
+  eps: 1e-10
+  hidden_dims:
+  - 1000
+  init_seed: 43
+  p_dropout: 0.1
+  stack_time: false
+  y_guide_name: logp
+make_figs: true
+models_load_dir: trained/2025-02-09/no_overrides/models_saved
+models_save_dir: trained/2025-02-09/no_overrides/models_saved
+num_gpus: 1
+num_heavy_atoms_predictor_model:
+  activation_fn:
+    name: ReLU
+    params: null
+  eps: 1e-10
+  hidden_dims:
+  - 1000
+  init_seed: 43
+  p_dropout: 0.1
+  stack_time: false
+  y_guide_name: num_heavy_atoms
+num_rings_predictor_model:
+  activation_fn:
+    name: ReLU
+    params: null
+  eps: 1e-10
+  hidden_dims:
+  - 1000
+  init_seed: 43
+  p_dropout: 0.1
+  stack_time: false
+  type: normal
+  y_guide_name: num_rings
+num_timesteps: null
+outputs_dir: trained/2025-02-09/no_overrides
+save_figs: true
+state: train
+training:
+  denoising_model:
+    clip_grad: true
+    lr: 0.0001
+    num_epochs: 100
+    optimizer: Adam
+    seed: 42
+    warmup: 0
+  logp_predictor_model:
+    clip_grad: true
+    lr: 0.0001
+    num_epochs: 50
+    optimizer: Adam
+    seed: 42
+    warmup: 0
+  num_heavy_atoms_predictor_model:
+    clip_grad: true
+    lr: 0.0001
+    num_epochs: 50
+    optimizer: Adam
+    seed: 42
+    warmup: 0
+  num_rings_predictor_model:
+    clip_grad: true
+    lr: 0.0001
+    num_epochs: 50
+    optimizer: Adam
+    seed: 42
+    warmup: 0
+
+[INFO]: Models to be trained: ['denoising_model', 'num_rings_predictor_model', 'logp_predictor_model', 'num_heavy_atoms_predictor_model']
+[INFO]: Model: denoising_model
+[INFO]: Number parameters: 528043200
+[INFO]: Training for 100 epochs on device 'cuda:0':
+[INFO]: [0] (train-moving-loss) | 1.885340184863167
+[INFO]: [0] (validation-loss)   | 1.686155932967134
+[INFO]: [1] (train-moving-loss) | 1.6698984110024413
+[INFO]: [1] (validation-loss)   | 1.5845830557735394
+[INFO]: [2] (train-moving-loss) | 1.601790540439412
+[INFO]: [2] (validation-loss)   | 1.535599483605708
+[INFO]: [3] (train-moving-loss) | 1.5567064099189434
+[INFO]: [3] (validation-loss)   | 1.4969292198264947
+[INFO]: [4] (train-moving-loss) | 1.5232302405061118
+[INFO]: [4] (validation-loss)   | 1.462717645337891
+[INFO]: [5] (train-moving-loss) | 1.4949704624084106
+[INFO]: [5] (validation-loss)   | 1.4393691131260604
+[INFO]: [6] (train-moving-loss) | 1.4712355274252396
+[INFO]: [6] (validation-loss)   | 1.4186561060251053
+[INFO]: [7] (train-moving-loss) | 1.4503796796888628
+[INFO]: [7] (validation-loss)   | 1.3967919454414974
+[INFO]: [8] (train-moving-loss) | 1.4317829808119769
+[INFO]: [8] (validation-loss)   | 1.3867200029444995
+[INFO]: [9] (train-moving-loss) | 1.4163992353107617
+[INFO]: [9] (validation-loss)   | 1.3710606245316221
+[INFO]: [10] (train-moving-loss) | 1.4027627143889838
+[INFO]: [10] (validation-loss)   | 1.3604568218087552
+[INFO]: [11] (train-moving-loss) | 1.388944057971161
+[INFO]: [11] (validation-loss)   | 1.3469060517255231
+[INFO]: [12] (train-moving-loss) | 1.3755330423711793
+[INFO]: [12] (validation-loss)   | 1.3333516493751414
+[INFO]: [13] (train-moving-loss) | 1.3656757650355384
+[INFO]: [13] (validation-loss)   | 1.3295334797025227
+[INFO]: [14] (train-moving-loss) | 1.35428397764143
+[INFO]: [14] (validation-loss)   | 1.315652252989334
+[INFO]: [15] (train-moving-loss) | 1.3462849271553483
+[INFO]: [15] (validation-loss)   | 1.3122281317431557
+[INFO]: [16] (train-moving-loss) | 1.3352081870583103
+[INFO]: [16] (validation-loss)   | 1.3045443767783034
+[INFO]: [17] (train-moving-loss) | 1.328625324947663
+[INFO]: [17] (validation-loss)   | 1.2972523353089846
+[INFO]: [18] (train-moving-loss) | 1.31812371372115
+[INFO]: [18] (validation-loss)   | 1.2892030799239251
+[INFO]: [19] (train-moving-loss) | 1.3130236806015247
+[INFO]: [19] (validation-loss)   | 1.2786793948373285
+[INFO]: [20] (train-moving-loss) | 1.3066700541454812
+[INFO]: [20] (validation-loss)   | 1.2808086031650399
+[INFO]: [21] (train-moving-loss) | 1.2981644063922608
+[INFO]: [21] (validation-loss)   | 1.2754591890458782
+[INFO]: [22] (train-moving-loss) | 1.2896462703263216
+[INFO]: [22] (validation-loss)   | 1.268308510341405
+[INFO]: [23] (train-moving-loss) | 1.2871523934424767
+[INFO]: [23] (validation-loss)   | 1.2649593797188923
+[INFO]: [24] (train-moving-loss) | 1.2781408311435225
+[INFO]: [24] (validation-loss)   | 1.2554905114064157
+[INFO]: [25] (train-moving-loss) | 1.272460746790115
+[INFO]: [25] (validation-loss)   | 1.2504660374948668
+[INFO]: [26] (train-moving-loss) | 1.2637017312132295
+[INFO]: [26] (validation-loss)   | 1.2512140310209665
+[INFO]: [27] (train-moving-loss) | 1.2604099628874117
+[INFO]: [27] (validation-loss)   | 1.2487944217406557
+[INFO]: [28] (train-moving-loss) | 1.2564474615893357
+[INFO]: [28] (validation-loss)   | 1.2440889966537763
+[INFO]: [29] (train-moving-loss) | 1.2508293500803354
+[INFO]: [29] (validation-loss)   | 1.241854470893429
+[INFO]: [30] (train-moving-loss) | 1.2459895773793217
+[INFO]: [30] (validation-loss)   | 1.2332938922000232
+[INFO]: [31] (train-moving-loss) | 1.2392219059001468
+[INFO]: [31] (validation-loss)   | 1.228504569959441
+[INFO]: [32] (train-moving-loss) | 1.2366150708146093
+[INFO]: [32] (validation-loss)   | 1.2277274730315269
+[INFO]: [33] (train-moving-loss) | 1.233675429245263
+[INFO]: [33] (validation-loss)   | 1.2258074727517292
+[INFO]: [34] (train-moving-loss) | 1.226600707607659
+[INFO]: [34] (validation-loss)   | 1.225932168910693
+[INFO]: [35] (train-moving-loss) | 1.2241793751654169
+[INFO]: [35] (validation-loss)   | 1.2225453950869987
+[INFO]: [36] (train-moving-loss) | 1.2214878559612117
+[INFO]: [36] (validation-loss)   | 1.213506668806076
+[INFO]: [37] (train-moving-loss) | 1.2168857536433317
+[INFO]: [37] (validation-loss)   | 1.215252765052987
+[INFO]: [38] (train-moving-loss) | 1.2119376455819564
+[INFO]: [38] (validation-loss)   | 1.2114022785649639
+[INFO]: [39] (train-moving-loss) | 1.2074848394109168
+[INFO]: [39] (validation-loss)   | 1.2083508131643719
+[INFO]: [40] (train-moving-loss) | 1.2059224157073598
+[INFO]: [40] (validation-loss)   | 1.2052542051012047
+[INFO]: [41] (train-moving-loss) | 1.201416814370952
+[INFO]: [41] (validation-loss)   | 1.2092475402305316
+[INFO]: [42] (train-moving-loss) | 1.19564021701523
+[INFO]: [42] (validation-loss)   | 1.2060762651295842
+[INFO]: [43] (train-moving-loss) | 1.194927009691925
+[INFO]: [43] (validation-loss)   | 1.2030747699937063
+[INFO]: [44] (train-moving-loss) | 1.1893560110492316
+[INFO]: [44] (validation-loss)   | 1.196648884517877
+[INFO]: [45] (train-moving-loss) | 1.1883733563238317
+[INFO]: [45] (validation-loss)   | 1.192449971534717
+[INFO]: [46] (train-moving-loss) | 1.1833773595366321
+[INFO]: [46] (validation-loss)   | 1.193448537812572
+[INFO]: [47] (train-moving-loss) | 1.1791439065451146
+[INFO]: [47] (validation-loss)   | 1.1943341544731891
+[INFO]: [48] (train-moving-loss) | 1.1784664151430004
+[INFO]: [48] (validation-loss)   | 1.1896174971528632
+[INFO]: [49] (train-moving-loss) | 1.1771703686871535
+[INFO]: [49] (validation-loss)   | 1.1889897734550252
+[INFO]: [50] (train-moving-loss) | 1.1731654940755534
+[INFO]: [50] (validation-loss)   | 1.1852431418257279
+[INFO]: [51] (train-moving-loss) | 1.1683097058031933
+[INFO]: [51] (validation-loss)   | 1.1880706042425404
+[INFO]: [52] (train-moving-loss) | 1.1680964942438057
+[INFO]: [52] (validation-loss)   | 1.189491399162484
+[INFO]: [53] (train-moving-loss) | 1.1658745251006641
+[INFO]: [53] (validation-loss)   | 1.186204745180936
+[INFO]: [54] (train-moving-loss) | 1.161870603476475
+[INFO]: [54] (validation-loss)   | 1.1811665600812584
+[INFO]: [55] (train-moving-loss) | 1.157880185941803
+[INFO]: [55] (validation-loss)   | 1.1812276070836198
+[INFO]: [56] (train-moving-loss) | 1.1563211723483002
+[INFO]: [56] (validation-loss)   | 1.1759022327147768
+[INFO]: [57] (train-moving-loss) | 1.1524902823522116
+[INFO]: [57] (validation-loss)   | 1.1781040726845236
+[INFO]: [58] (train-moving-loss) | 1.1499547411659865
+[INFO]: [58] (validation-loss)   | 1.1725284679165444
+[INFO]: [59] (train-moving-loss) | 1.1505085961115553
+[INFO]: [59] (validation-loss)   | 1.1793045838008864
+[INFO]: [60] (train-moving-loss) | 1.1459993831832849
+[INFO]: [60] (validation-loss)   | 1.1746910085987345
+[INFO]: [61] (train-moving-loss) | 1.1437905846995917
+[INFO]: [61] (validation-loss)   | 1.1735336728175814
+[INFO]: [62] (train-moving-loss) | 1.1416513887982895
+[INFO]: [62] (validation-loss)   | 1.1695882189223956
+[INFO]: [63] (train-moving-loss) | 1.1370235039901833
+[INFO]: [63] (validation-loss)   | 1.1692342847959767
+[INFO]: [64] (train-moving-loss) | 1.1384614452821162
+[INFO]: [64] (validation-loss)   | 1.1694988221179492
+[INFO]: [65] (train-moving-loss) | 1.136724181391295
+[INFO]: [65] (validation-loss)   | 1.1683197934258434
+[INFO]: [66] (train-moving-loss) | 1.1332737066909366
+[INFO]: [66] (validation-loss)   | 1.1633274539931049
+[INFO]: [67] (train-moving-loss) | 1.132068326736758
+[INFO]: [67] (validation-loss)   | 1.1674183287879911
+[INFO]: [68] (train-moving-loss) | 1.13017282200584
+[INFO]: [68] (validation-loss)   | 1.1645849057820052
+[INFO]: [69] (train-moving-loss) | 1.1268775218940643
+[INFO]: [69] (validation-loss)   | 1.1613128342389063
+[INFO]: [70] (train-moving-loss) | 1.1262922438106466
+[INFO]: [70] (validation-loss)   | 1.162983121482897
+[INFO]: [71] (train-moving-loss) | 1.1238751375531575
+[INFO]: [71] (validation-loss)   | 1.15889696683345
+[INFO]: [72] (train-moving-loss) | 1.1191107581709616
+[INFO]: [72] (validation-loss)   | 1.1644235255827964
+[INFO]: [73] (train-moving-loss) | 1.1182894276785813
+[INFO]: [73] (validation-loss)   | 1.160606314946418
+[INFO]: [74] (train-moving-loss) | 1.1181835609933604
+[INFO]: [74] (validation-loss)   | 1.1590738941186642
+[INFO]: [75] (train-moving-loss) | 1.1155857939630232
+[INFO]: [75] (validation-loss)   | 1.1583668199293784
+[INFO]: [76] (train-moving-loss) | 1.1135964041108422
+[INFO]: [76] (validation-loss)   | 1.156929355660243
+[INFO]: [77] (train-moving-loss) | 1.1122382760297695
+[INFO]: [77] (validation-loss)   | 1.1564647295983765
+[INFO]: [78] (train-moving-loss) | 1.111806461328983
+[INFO]: [78] (validation-loss)   | 1.1609659257294245
+[INFO]: [79] (train-moving-loss) | 1.1089087767461134
+[INFO]: [79] (validation-loss)   | 1.1565939212942722
+[INFO]: [80] (train-moving-loss) | 1.1084847907672821
+[INFO]: [80] (validation-loss)   | 1.1530164752046435
+[INFO]: [81] (train-moving-loss) | 1.1044548191657049
+[INFO]: [81] (validation-loss)   | 1.1530336144080222
+[INFO]: [82] (train-moving-loss) | 1.104101353911844
+[INFO]: [82] (validation-loss)   | 1.1554039227912616
+[INFO]: [83] (train-moving-loss) | 1.0995248477455206
+[INFO]: [83] (validation-loss)   | 1.1505516612878903
+[INFO]: [84] (train-moving-loss) | 1.1003572533366692
+[INFO]: [84] (validation-loss)   | 1.1524228987334662
+[INFO]: [85] (train-moving-loss) | 1.0994510957556536
+[INFO]: [85] (validation-loss)   | 1.147824772731031
+[INFO]: [86] (train-moving-loss) | 1.098983125202065
+[INFO]: [86] (validation-loss)   | 1.152610094602138
+[INFO]: [87] (train-moving-loss) | 1.0973989534527921
+[INFO]: [87] (validation-loss)   | 1.1530836993929732
+[INFO]: [88] (train-moving-loss) | 1.09500992885118
+[INFO]: [88] (validation-loss)   | 1.1495969533670896
+[INFO]: [89] (train-moving-loss) | 1.0927356913677992
+[INFO]: [89] (validation-loss)   | 1.1512856207881512
+[INFO]: [90] (train-moving-loss) | 1.091426147566596
+[INFO]: [90] (validation-loss)   | 1.1521653637102958
+[INFO]: [91] (train-moving-loss) | 1.0926636444329592
+[INFO]: [91] (validation-loss)   | 1.146750754018209
+[INFO]: [92] (train-moving-loss) | 1.0886674684776319
+[INFO]: [92] (validation-loss)   | 1.1519082961720901
+[INFO]: [93] (train-moving-loss) | 1.086327233915244
+[INFO]: [93] (validation-loss)   | 1.1481745619654156
+[INFO]: [94] (train-moving-loss) | 1.086980047183489
+[INFO]: [94] (validation-loss)   | 1.1494133639535147
+[INFO]: [95] (train-moving-loss) | 1.084034935662483
+[INFO]: [95] (validation-loss)   | 1.146583376818621
+[INFO]: [96] (train-moving-loss) | 1.083630269956314
+[INFO]: [96] (validation-loss)   | 1.1464147485449723
+[INFO]: [97] (train-moving-loss) | 1.0820354173919053
+[INFO]: [97] (validation-loss)   | 1.1443239083225258
+[INFO]: [98] (train-moving-loss) | 1.0822182233387292
+[INFO]: [98] (validation-loss)   | 1.1462569368933035
+[INFO]: [99] (train-moving-loss) | 1.0785985482869316
+[INFO]: [99] (validation-loss)   | 1.1431648345921328
+[INFO]: Training done (Duration: 319.48 mins)
+[INFO]: Saved 'denoising_model' in: trained/2025-02-09/no_overrides/models_saved/denoising_model.pt
+[INFO]: ----------------------------------------------------------------------------------------------------
+[INFO]: Using the property-model specific dataloader of the 'train_num_rings' set.
+[INFO]: Model: num_rings_predictor_model
+[INFO]: Number parameters: 3202002
+[INFO]: Training for 50 epochs on device 'cuda:0':
+[INFO]: [0] (train-moving-loss) | 2.9052473992936707
+[INFO]: [0] (validation-loss)   | 2.788269958236726
+[INFO]: [1] (train-moving-loss) | 2.7705283617086596
+[INFO]: [1] (validation-loss)   | 2.711337801302826
+[INFO]: [2] (train-moving-loss) | 2.7067670667277635
+[INFO]: [2] (validation-loss)   | 2.6539210355431466
+[INFO]: [3] (train-moving-loss) | 2.6530076932882127
+[INFO]: [3] (validation-loss)   | 2.5963378835422724
+[INFO]: [4] (train-moving-loss) | 2.607004265937585
+[INFO]: [4] (validation-loss)   | 2.547717376732926
+[INFO]: [5] (train-moving-loss) | 2.5696753789892743
+[INFO]: [5] (validation-loss)   | 2.5125947252975847
+[INFO]: [6] (train-moving-loss) | 2.538575210016769
+[INFO]: [6] (validation-loss)   | 2.478637873378259
+[INFO]: [7] (train-moving-loss) | 2.514715061692307
+[INFO]: [7] (validation-loss)   | 2.4510379655590615
+[INFO]: [8] (train-moving-loss) | 2.4987552820418504
+[INFO]: [8] (validation-loss)   | 2.427823984972104
+[INFO]: [9] (train-moving-loss) | 2.4854955585793466
+[INFO]: [9] (validation-loss)   | 2.414251289607092
+[INFO]: [10] (train-moving-loss) | 2.4754929362697213
+[INFO]: [10] (validation-loss)   | 2.403388876296486
+[INFO]: [11] (train-moving-loss) | 2.468664214647272
+[INFO]: [11] (validation-loss)   | 2.393793515081685
+[INFO]: [12] (train-moving-loss) | 2.4614170598009606
+[INFO]: [12] (validation-loss)   | 2.395608808206215
+[INFO]: [13] (train-moving-loss) | 2.4575849893269206
+[INFO]: [13] (validation-loss)   | 2.380258040448113
+[INFO]: [14] (train-moving-loss) | 2.4527902546948073
+[INFO]: [14] (validation-loss)   | 2.3807965619294715
+[INFO]: [15] (train-moving-loss) | 2.4487880807449955
+[INFO]: [15] (validation-loss)   | 2.3799276142439583
+[INFO]: [16] (train-moving-loss) | 2.444847287652129
+[INFO]: [16] (validation-loss)   | 2.387574371433657
+[INFO]: [17] (train-moving-loss) | 2.4432877923506853
+[INFO]: [17] (validation-loss)   | 2.37818886994318
+[INFO]: [18] (train-moving-loss) | 2.4411716697227273
+[INFO]: [18] (validation-loss)   | 2.375388393841029
+[INFO]: [19] (train-moving-loss) | 2.4383183088897096
+[INFO]: [19] (validation-loss)   | 2.38483530931393
+[INFO]: [20] (train-moving-loss) | 2.4349103866914854
+[INFO]: [20] (validation-loss)   | 2.3642028330759026
+[INFO]: [21] (train-moving-loss) | 2.4318303366241936
+[INFO]: [21] (validation-loss)   | 2.369569665218497
+[INFO]: [22] (train-moving-loss) | 2.4290104077210786
+[INFO]: [22] (validation-loss)   | 2.3645748857673743
+[INFO]: [23] (train-moving-loss) | 2.4282137654475857
+[INFO]: [23] (validation-loss)   | 2.355928549457295
+[INFO]: [24] (train-moving-loss) | 2.424830290832839
+[INFO]: [24] (validation-loss)   | 2.3622650845779036
+[INFO]: [25] (train-moving-loss) | 2.4218682211191007
+[INFO]: [25] (validation-loss)   | 2.3602183937527643
+[INFO]: [26] (train-moving-loss) | 2.4173987371375762
+[INFO]: [26] (validation-loss)   | 2.353964918826913
+[INFO]: [27] (train-moving-loss) | 2.4199893995377955
+[INFO]: [27] (validation-loss)   | 2.3531307944692825
+[INFO]: [28] (train-moving-loss) | 2.416051914955447
+[INFO]: [28] (validation-loss)   | 2.3566532773452824
+[INFO]: [29] (train-moving-loss) | 2.4154173002747603
+[INFO]: [29] (validation-loss)   | 2.3495609396172368
+[INFO]: [30] (train-moving-loss) | 2.4125624052700165
+[INFO]: [30] (validation-loss)   | 2.350047647204858
+[INFO]: [31] (train-moving-loss) | 2.41118686295355
+[INFO]: [31] (validation-loss)   | 2.354564694679931
+[INFO]: [32] (train-moving-loss) | 2.411027165468355
+[INFO]: [32] (validation-loss)   | 2.350555393486342
+[INFO]: [33] (train-moving-loss) | 2.4101723499358045
+[INFO]: [33] (validation-loss)   | 2.3502436202939085
+[INFO]: [34] (train-moving-loss) | 2.407230846540912
+[INFO]: [34] (validation-loss)   | 2.3475231007053265
+[INFO]: [35] (train-moving-loss) | 2.4059206356610097
+[INFO]: [35] (validation-loss)   | 2.349208972693487
+[INFO]: [36] (train-moving-loss) | 2.405658947103869
+[INFO]: [36] (validation-loss)   | 2.3457169707350154
+[INFO]: [37] (train-moving-loss) | 2.4055185760110382
+[INFO]: [37] (validation-loss)   | 2.3416985672388115
+[INFO]: [38] (train-moving-loss) | 2.4016082853843805
+[INFO]: [38] (validation-loss)   | 2.3525427135962325
+[INFO]: [39] (train-moving-loss) | 2.4016210962927986
+[INFO]: [39] (validation-loss)   | 2.3416889082936563
+[INFO]: [40] (train-moving-loss) | 2.4012451702665447
+[INFO]: [40] (validation-loss)   | 2.344470128853451
+[INFO]: [41] (train-moving-loss) | 2.4009140309643033
+[INFO]: [41] (validation-loss)   | 2.3426794357379612
+[INFO]: [42] (train-moving-loss) | 2.3969211672038044
+[INFO]: [42] (validation-loss)   | 2.343207906479616
+[INFO]: [43] (train-moving-loss) | 2.397873684896606
+[INFO]: [43] (validation-loss)   | 2.336205619648411
+[INFO]: [44] (train-moving-loss) | 2.396271317213727
+[INFO]: [44] (validation-loss)   | 2.3395141704810714
+[INFO]: [45] (train-moving-loss) | 2.3966353592790193
+[INFO]: [45] (validation-loss)   | 2.334791906707955
+[INFO]: [46] (train-moving-loss) | 2.3948228337990796
+[INFO]: [46] (validation-loss)   | 2.339172284473435
+[INFO]: [47] (train-moving-loss) | 2.3937093105036404
+[INFO]: [47] (validation-loss)   | 2.332756144232331
+[INFO]: [48] (train-moving-loss) | 2.3915022924472176
+[INFO]: [48] (validation-loss)   | 2.3300173128000363
+[INFO]: [49] (train-moving-loss) | 2.394120175155312
+[INFO]: [49] (validation-loss)   | 2.3334907906823577
+[INFO]: Training done (Duration: 15.19 mins)
+[INFO]: Saved 'num_rings_predictor_model' in: trained/2025-02-09/no_overrides/models_saved/num_rings_predictor_model.pt
+[INFO]: ----------------------------------------------------------------------------------------------------
+[INFO]: Using the property-model specific dataloader of the 'train_logp' set.
+[INFO]: Model: logp_predictor_model
+[INFO]: Number parameters: 3202002
+[INFO]: Training for 50 epochs on device 'cuda:0':
+[INFO]: [0] (train-moving-loss) | 3.31830464850676
+[INFO]: [0] (validation-loss)   | 3.2279177549992646
+[INFO]: [1] (train-moving-loss) | 3.2256368751485915
+[INFO]: [1] (validation-loss)   | 3.177163963038552
+[INFO]: [2] (train-moving-loss) | 3.1862344222271113
+[INFO]: [2] (validation-loss)   | 3.140099663614728
+[INFO]: [3] (train-moving-loss) | 3.1572514813005017
+[INFO]: [3] (validation-loss)   | 3.103054088528685
+[INFO]: [4] (train-moving-loss) | 3.13644690910767
+[INFO]: [4] (validation-loss)   | 3.0825151329758778
+[INFO]: [5] (train-moving-loss) | 3.1228594794955287
+[INFO]: [5] (validation-loss)   | 3.0728038908547437
+[INFO]: [6] (train-moving-loss) | 3.1120444558065183
+[INFO]: [6] (validation-loss)   | 3.063137440003112
+[INFO]: [7] (train-moving-loss) | 3.104580346172926
+[INFO]: [7] (validation-loss)   | 3.055639333804781
+[INFO]: [8] (train-moving-loss) | 3.094920868521401
+[INFO]: [8] (validation-loss)   | 3.0516676364084665
+[INFO]: [9] (train-moving-loss) | 3.0899580567841007
+[INFO]: [9] (validation-loss)   | 3.061742157616875
+[INFO]: [10] (train-moving-loss) | 3.0835180715967563
+[INFO]: [10] (validation-loss)   | 3.044345899605851
+[INFO]: [11] (train-moving-loss) | 3.074926603146409
+[INFO]: [11] (validation-loss)   | 3.038618179544744
+[INFO]: [12] (train-moving-loss) | 3.0715065283448113
+[INFO]: [12] (validation-loss)   | 3.030190207968197
+[INFO]: [13] (train-moving-loss) | 3.0701038666331
+[INFO]: [13] (validation-loss)   | 3.022918550539216
+[INFO]: [14] (train-moving-loss) | 3.0622245998142774
+[INFO]: [14] (validation-loss)   | 3.016210862782211
+[INFO]: [15] (train-moving-loss) | 3.061144928210315
+[INFO]: [15] (validation-loss)   | 3.0254941839553324
+[INFO]: [16] (train-moving-loss) | 3.05455882578011
+[INFO]: [16] (validation-loss)   | 3.0148616919457663
+[INFO]: [17] (train-moving-loss) | 3.051885255535839
+[INFO]: [17] (validation-loss)   | 3.027013386642584
+[INFO]: [18] (train-moving-loss) | 3.0492648300292795
+[INFO]: [18] (validation-loss)   | 3.0243631810822746
+[INFO]: [19] (train-moving-loss) | 3.045198819723474
+[INFO]: [19] (validation-loss)   | 3.0042867411130643
+[INFO]: [20] (train-moving-loss) | 3.043121289932147
+[INFO]: [20] (validation-loss)   | 3.021391768335797
+[INFO]: [21] (train-moving-loss) | 3.0410542074706055
+[INFO]: [21] (validation-loss)   | 3.0202468523919332
+[INFO]: [22] (train-moving-loss) | 3.0373472025907744
+[INFO]: [22] (validation-loss)   | 3.007290835659873
+[INFO]: [23] (train-moving-loss) | 3.0332064789711586
+[INFO]: [23] (validation-loss)   | 3.0041763717659347
+[INFO]: [24] (train-moving-loss) | 3.0322446900553075
+[INFO]: [24] (validation-loss)   | 3.0050810600424414
+[INFO]: [25] (train-moving-loss) | 3.030402905282829
+[INFO]: [25] (validation-loss)   | 2.998606201495087
+[INFO]: [26] (train-moving-loss) | 3.0260779266896956
+[INFO]: [26] (validation-loss)   | 2.9969111656045313
+[INFO]: [27] (train-moving-loss) | 3.0246456977020952
+[INFO]: [27] (validation-loss)   | 3.007381843722515
+[INFO]: [28] (train-moving-loss) | 3.021733986263565
+[INFO]: [28] (validation-loss)   | 3.0087550319887106
+[INFO]: [29] (train-moving-loss) | 3.0203134660136333
+[INFO]: [29] (validation-loss)   | 3.0005631062774976
+[INFO]: [30] (train-moving-loss) | 3.019390529209934
+[INFO]: [30] (validation-loss)   | 2.992234738800815
+[INFO]: [31] (train-moving-loss) | 3.01660859728434
+[INFO]: [31] (validation-loss)   | 3.007264017559993
+[INFO]: [32] (train-moving-loss) | 3.0185189404495105
+[INFO]: [32] (validation-loss)   | 3.0090489337633843
+[INFO]: [33] (train-moving-loss) | 3.0145428752699344
+[INFO]: [33] (validation-loss)   | 2.9907957564836765
+[INFO]: [34] (train-moving-loss) | 3.012271446729593
+[INFO]: [34] (validation-loss)   | 3.0010335081291997
+[INFO]: [35] (train-moving-loss) | 3.0113041382175645
+[INFO]: [35] (validation-loss)   | 2.9864929520435415
+[INFO]: [36] (train-moving-loss) | 3.00890043132776
+[INFO]: [36] (validation-loss)   | 2.9998965178573482
+[INFO]: [37] (train-moving-loss) | 3.0081451302613806
+[INFO]: [37] (validation-loss)   | 2.990015910260348
+[INFO]: [38] (train-moving-loss) | 3.0068486127758476
+[INFO]: [38] (validation-loss)   | 2.990243489772206
+[INFO]: [39] (train-moving-loss) | 3.0041914206015745
+[INFO]: [39] (validation-loss)   | 3.0119930366093146
+[INFO]: [40] (train-moving-loss) | 3.005875986243119
+[INFO]: [40] (validation-loss)   | 2.9996226826472263
+[INFO]: [41] (train-moving-loss) | 3.003927156774082
+[INFO]: [41] (validation-loss)   | 3.005023580215965
+[INFO]: [42] (train-moving-loss) | 3.0031551446759805
+[INFO]: [42] (validation-loss)   | 2.9916433509922427
+[INFO]: [43] (train-moving-loss) | 3.0008440116364774
+[INFO]: [43] (validation-loss)   | 2.9825140053258283
+[INFO]: [44] (train-moving-loss) | 3.0005603970627064
+[INFO]: [44] (validation-loss)   | 2.9989242314294793
+[INFO]: [45] (train-moving-loss) | 2.999970469067645
+[INFO]: [45] (validation-loss)   | 2.993311575765889
+[INFO]: [46] (train-moving-loss) | 2.998055238259157
+[INFO]: [46] (validation-loss)   | 2.984704318405694
+[INFO]: [47] (train-moving-loss) | 2.9976041140888547
+[INFO]: [47] (validation-loss)   | 2.981700478238541
+[INFO]: [48] (train-moving-loss) | 2.996676357083448
+[INFO]: [48] (validation-loss)   | 3.007948660451498
+[INFO]: [49] (train-moving-loss) | 2.9955749228214206
+[INFO]: [49] (validation-loss)   | 3.0068628483736366
+[INFO]: Training done (Duration: 16.67 mins)
+[INFO]: Saved 'logp_predictor_model' in: trained/2025-02-09/no_overrides/models_saved/logp_predictor_model.pt
+/mnt/HDD/son9ih/discrete_guidance/applications/molecules/src/plotting.py:158: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+[INFO]: ----------------------------------------------------------------------------------------------------
+[INFO]: Using the property-model specific dataloader of the 'train_num_heavy_atoms' set.
+[INFO]: Model: num_heavy_atoms_predictor_model
+[INFO]: Number parameters: 3202002
+[INFO]: Training for 50 epochs on device 'cuda:0':
+[INFO]: [0] (train-moving-loss) | 4.851797579719859
+[INFO]: [0] (validation-loss)   | 4.4531343452102465
+[INFO]: [1] (train-moving-loss) | 4.429576657216795
+[INFO]: [1] (validation-loss)   | 4.372475383670759
+[INFO]: [2] (train-moving-loss) | 4.354682573165614
+[INFO]: [2] (validation-loss)   | 4.29781946078504
+[INFO]: [3] (train-moving-loss) | 4.287218983102182
+[INFO]: [3] (validation-loss)   | 4.230742294918044
+[INFO]: [4] (train-moving-loss) | 4.225295783712828
+[INFO]: [4] (validation-loss)   | 4.1663432440498385
+[INFO]: [5] (train-moving-loss) | 4.1708206628366815
+[INFO]: [5] (validation-loss)   | 4.111685408707942
+[INFO]: [6] (train-moving-loss) | 4.120759911035105
+[INFO]: [6] (validation-loss)   | 4.061916525892633
+[INFO]: [7] (train-moving-loss) | 4.078748552133551
+[INFO]: [7] (validation-loss)   | 4.013960086152145
+[INFO]: [8] (train-moving-loss) | 4.042058615112505
+[INFO]: [8] (validation-loss)   | 3.9791241719632966
+[INFO]: [9] (train-moving-loss) | 4.010940789551932
+[INFO]: [9] (validation-loss)   | 3.9406249558077695
+[INFO]: [10] (train-moving-loss) | 3.986176502398635
+[INFO]: [10] (validation-loss)   | 3.9127945326362195
+[INFO]: [11] (train-moving-loss) | 3.9659629973396076
+[INFO]: [11] (validation-loss)   | 3.890504562705132
+[INFO]: [12] (train-moving-loss) | 3.952085708685106
+[INFO]: [12] (validation-loss)   | 3.8708368355260236
+[INFO]: [13] (train-moving-loss) | 3.9433114579861672
+[INFO]: [13] (validation-loss)   | 3.860459654401037
+[INFO]: [14] (train-moving-loss) | 3.9341993602924537
+[INFO]: [14] (validation-loss)   | 3.85002626235515
+[INFO]: [15] (train-moving-loss) | 3.9309751019545285
+[INFO]: [15] (validation-loss)   | 3.8440874131653597
+[INFO]: [16] (train-moving-loss) | 3.9272969309855283
+[INFO]: [16] (validation-loss)   | 3.8487150155350753
+[INFO]: [17] (train-moving-loss) | 3.922265134724477
+[INFO]: [17] (validation-loss)   | 3.8407229160165186
+[INFO]: [18] (train-moving-loss) | 3.9211592267107878
+[INFO]: [18] (validation-loss)   | 3.8373215348151937
+[INFO]: [19] (train-moving-loss) | 3.9190825645432787
+[INFO]: [19] (validation-loss)   | 3.8355164403197155
+[INFO]: [20] (train-moving-loss) | 3.9138346332851786
+[INFO]: [20] (validation-loss)   | 3.8363595367974317
+[INFO]: [21] (train-moving-loss) | 3.911030249673075
+[INFO]: [21] (validation-loss)   | 3.8370067659282285
+[INFO]: [22] (train-moving-loss) | 3.909882076752005
+[INFO]: [22] (validation-loss)   | 3.834256338773911
+[INFO]: [23] (train-moving-loss) | 3.909499474256185
+[INFO]: [23] (validation-loss)   | 3.827618542575437
+[INFO]: [24] (train-moving-loss) | 3.9062189671180207
+[INFO]: [24] (validation-loss)   | 3.8274941249871355
+[INFO]: [25] (train-moving-loss) | 3.905939024989676
+[INFO]: [25] (validation-loss)   | 3.8284415191187517
+[INFO]: [26] (train-moving-loss) | 3.901969203529338
+[INFO]: [26] (validation-loss)   | 3.8306658771746327
+[INFO]: [27] (train-moving-loss) | 3.90232610190458
+[INFO]: [27] (validation-loss)   | 3.8428635502460113
+[INFO]: [28] (train-moving-loss) | 3.9011254371804926
+[INFO]: [28] (validation-loss)   | 3.826753192865699
+[INFO]: [29] (train-moving-loss) | 3.900929185093979
+[INFO]: [29] (validation-loss)   | 3.8275656176411457
+[INFO]: [30] (train-moving-loss) | 3.8990245247586603
+[INFO]: [30] (validation-loss)   | 3.8308789849780096
+[INFO]: [31] (train-moving-loss) | 3.896747487824022
+[INFO]: [31] (validation-loss)   | 3.8218004379312362
+[INFO]: [32] (train-moving-loss) | 3.898909106062244
+[INFO]: [32] (validation-loss)   | 3.8231542878569917
+[INFO]: [33] (train-moving-loss) | 3.8939991610533533
+[INFO]: [33] (validation-loss)   | 3.8253683455319583
+[INFO]: [34] (train-moving-loss) | 3.8940288140050647
+[INFO]: [34] (validation-loss)   | 3.8223421648456464
+[INFO]: [35] (train-moving-loss) | 3.8947599226420557
+[INFO]: [35] (validation-loss)   | 3.8210877733749324
+[INFO]: [36] (train-moving-loss) | 3.8927250723991174
+[INFO]: [36] (validation-loss)   | 3.8186155088775826
+[INFO]: [37] (train-moving-loss) | 3.8933219234002956
+[INFO]: [37] (validation-loss)   | 3.8168769750634994
+[INFO]: [38] (train-moving-loss) | 3.890960689737511
+[INFO]: [38] (validation-loss)   | 3.823841751369971
+[INFO]: [39] (train-moving-loss) | 3.891524264424056
+[INFO]: [39] (validation-loss)   | 3.8155041913108345
+[INFO]: [40] (train-moving-loss) | 3.890204937936374
+[INFO]: [40] (validation-loss)   | 3.8204432232110572
+[INFO]: [41] (train-moving-loss) | 3.8903066850944987
+[INFO]: [41] (validation-loss)   | 3.816802720644484
+[INFO]: [42] (train-moving-loss) | 3.8890090620661355
+[INFO]: [42] (validation-loss)   | 3.823591142019966
+[INFO]: [43] (train-moving-loss) | 3.889300423932363
+[INFO]: [43] (validation-loss)   | 3.815428990200474
+[INFO]: [44] (train-moving-loss) | 3.8857445298470146
+[INFO]: [44] (validation-loss)   | 3.8142889568496448
+[INFO]: [45] (train-moving-loss) | 3.887574741014827
+[INFO]: [45] (validation-loss)   | 3.813143955613779
+[INFO]: [46] (train-moving-loss) | 3.8854936153367903
+[INFO]: [46] (validation-loss)   | 3.8148037793746052
+[INFO]: [47] (train-moving-loss) | 3.885624778027182
+[INFO]: [47] (validation-loss)   | 3.812547171465024
+[INFO]: [48] (train-moving-loss) | 3.8833238421590495
+[INFO]: [48] (validation-loss)   | 3.813698235914797
+[INFO]: [49] (train-moving-loss) | 3.88649956277055
+[INFO]: [49] (validation-loss)   | 3.8124977539772766
+[INFO]: Training done (Duration: 17.31 mins)
+[INFO]: Saved 'num_heavy_atoms_predictor_model' in: trained/2025-02-09/no_overrides/models_saved/num_heavy_atoms_predictor_model.pt
+[INFO]: ----------------------------------------------------------------------------------------------------
