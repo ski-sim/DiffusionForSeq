@@ -88,7 +88,6 @@ def train_model(manager:object,
         batch_train_loss_list = list()
         for batch_train_data in train_dataloader:
             # Train on the batch for the specified model
-        
             training_state = manager.train_on_batch(
                 batch_train_data, 
                 which_model, 
@@ -120,8 +119,8 @@ def train_model(manager:object,
                 eval_output = manager.eval_loss_on_batch(
                     batch_valid_data, 
                     which_model)
-                print(eval_output)
-                assert False
+                # print(eval_output)
+                # assert False
                 batch_valid_loss_list.append(eval_output['loss'])
 
             # Average the validation losses in the batch thereby determining the total validation

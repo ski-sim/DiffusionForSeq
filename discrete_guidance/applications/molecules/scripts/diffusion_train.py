@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import pandas as pd
 
+import csv
+
 # Import custom modules
 from discrete_guidance.applications.molecules.src import bookkeeping
 from discrete_guidance.applications.molecules.src import config_handling
@@ -32,6 +34,7 @@ def diffusion_train(args, round, dataset):
     # args = parser.parse_args()
     # args = defaultdict() # 이러면 args가 중첩되지 못하는데?
     args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
+    # args.model = 'denoising_model'
     args.model = 'denoising_model'
     args.overrides = ''
 
@@ -79,19 +82,26 @@ def diffusion_train(args, round, dataset):
     sequences = dataset.train
     scores = dataset.train_scores
     
-    tsv_data = []
+    csv_data = []
     
     for seq, score in zip(sequences, scores):
-        seq_str = ''.join([str(i) for i in seq])
+        # seq_str = ''.join([str(i) for i in seq])
+        sequence = "".join(map(str, seq))
+        csv_data.append([sequence, float(score)])
         # seq_str = ''.join(map(str,[str(i) for i in seq]))
-        tsv_data.append({'sequence': seq_str, 'reward': float(score)})
+        # csv_data.append({'sequence': seq_str, 'reward': float(score)})
         
-    df = pd.DataFrame(tsv_data)
+        
+    # df = pd.DataFrame(csv_data)
 
-    sequence_data_path ='../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.tsv'
-    df.to_csv(sequence_data_path, sep='\t', index=False)
+    sequence_data_path ='../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv'
     
-    logger.info(f"Created sequence dataset for round {round} at {sequence_data_path}")
+    # df.to_csv(sequence_data_path, sep='\t', index=False)
+    with open(sequence_data_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f, delimiter=",")
+        writer.writerow(["sequence", "reward"])
+        writer.writerows(csv_data)
+    # logger.info(f"Created sequence dataset for round {round} at {sequence_data_path}")
     ##############################################################################
 
     

@@ -642,6 +642,7 @@ class NormalPredictorGuideModel(torch.nn.Module):
         self.time_encoder       = time_encoder
         self.logger             = logger
         self.output_layer_dim   = 1
+        # proposal distribution은 시그마 값이 1
         self.sigma_noised       = sigma_noised
         self.log_sigma_unnoised = torch.nn.Parameter(torch.log(torch.tensor(sigma_noised))) # Initialize equal to log(sigma_noised)
 
@@ -861,10 +862,10 @@ class NormalPredictorGuideModel(torch.nn.Module):
         # Determine the class-probabilities
         y_pred = self.forward(batch_data_t, t, is_x_onehot=is_x_onehot) # Shape (B, #classes)
        
-        print(t)
-        print(self.get_sigma_t(t))
-        print('#'*50)
-        assert False
+        # print(t)
+        # print(self.get_sigma_t(t))
+        # print('#'*50)
+        # assert False
         # Determine sigma(t) and log(sigma(t))
         sigma_t     = self.get_sigma_t(t).squeeze()+self.eps
         log_sigma_t = torch.log(sigma_t)

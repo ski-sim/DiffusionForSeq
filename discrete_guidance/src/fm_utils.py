@@ -626,6 +626,7 @@ def predictor_loss_masking(
     
     # Sample xt by masking x1 according to time t
     xt = sample_xt(x1, t, mask_idx, pad_idx)
+    # print(xt)
     # The model outputs logits over number of classes
     if reduction == "mean":
         return -torch.mean(predictor_log_prob_y(y, xt, t))

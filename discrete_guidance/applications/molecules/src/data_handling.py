@@ -54,12 +54,11 @@ class MoleculesDataHandler(object):
         self.logger                      = logger
         
         # Filter dataset_df
-        self.dataset_df = self.filter_dataset_df(dataset_df) 
-   
+        self.dataset_df = self.filter_dataset_df(dataset_df)
+
         # Determine the maximal number of tokens (over all nswcs)
         # need revision
-        # 아마 이 부분이랑 아래 부분을 다른 데이터셋에서 돌리면 바꿔야 할수도
-        self.max_num_tokens = max([len(str(sequence)) for sequence in self.dataset_df['sequence']])
+        self.max_num_tokens = max([len(sequence) for sequence in self.dataset_df['sequence']])
         self.display(f"Maximum number of tokens (over all sequence): {self.max_num_tokens}")
         # self.max_num_tokens = max([len(nswcs) for nswcs in self.dataset_df['nswcs']])
         # self.display(f"Maximum number of tokens (over all nswcs): {self.max_num_tokens}")
@@ -68,8 +67,7 @@ class MoleculesDataHandler(object):
         unique_tokens_set = set()
         # for nswcs in self.dataset_df['nswcs']:
         for sequence in self.dataset_df['sequence']:
-            # modified 0519, 아마 이 부분이랑 위에 부분을 다른 데이터셋에서 돌리면 바꿔야 할수도
-            unique_tokens_set.update(set([token for token in str(sequence)]))
+            unique_tokens_set.update(set([token for token in sequence]))
 
         self.display(f"Unique tokens (#{len(unique_tokens_set)}): {unique_tokens_set}")
 
@@ -93,9 +91,8 @@ class MoleculesDataHandler(object):
 
         # Loop over the properties and their sampling specifications
         # Remark: This will add property-train subsets to self.subset_df_dict
-        # 여기까지 괜찮고
-        for property_name, sampling_specs in self.property_data_sampling_dict.items():
-            self.sample_property_train_subset(property_name, **sampling_specs)
+        # for property_name, sampling_specs in self.property_data_sampling_dict.items():
+        #     self.sample_property_train_subset(property_name, **sampling_specs)
 
         # Display the number of datapoints in all subsets
         for set_name, set_df in self.subset_df_dict.items():
@@ -120,10 +117,7 @@ class MoleculesDataHandler(object):
         # of training data using a normal distribution and save the sigmas
         self.train_property_sigma_dict = dict()
         for property_name in self.torch_data_property_names:
-            print(property_name)
             res_dict = self.fit_normal_to_property_distribution(property_name, set_name='train')
-            print(res_dict)
-            assert False
             self.train_property_sigma_dict[property_name] = float(res_dict['sigma'])
     
     def display(self, msg:str) -> None:
@@ -191,7 +185,7 @@ class MoleculesDataHandler(object):
         """
         # Generate a list containing the number of tokens per nswcs in the train set
         # num_tokens_per_train_nswcs_list = [len(nswcs) for nswcs in self.subset_df_dict['train']['nswcs']]
-        num_tokens_per_train_nswcs_list = [len(sequence) for sequence in str(self.subset_df_dict['train']['sequence'])]
+        num_tokens_per_train_nswcs_list = [len(sequence) for sequence in self.subset_df_dict['train']['sequence']]
         
         # Count the number of occurances of a certain "number of tokens". 
         # Remark: collections.Counter will return a dict-like counter object with "number of tokens" 
@@ -250,7 +244,7 @@ class MoleculesDataHandler(object):
             # Filter
             # what this method actually does
             dataset_df = dataset_df[(filter_range[0]<=dataset_df[property_name]) & (dataset_df[property_name]<=filter_range[1])]
-            
+
             if self.make_figs:
                 # Plot post-filtering
                 plotting.custom_hist(dataset_df[property_name], bins=_hist[1], color='blue', histtype='stepfilled', label='post-filter', ax=ax)
@@ -487,38 +481,32 @@ class MoleculesDataHandler(object):
             raise ValueError(err_msg)
 
         # Fit a normal distribution to the train distribution of a property
-        # property_vals = self.subset_df_dict[set_name][property_name]
-        property_vals = self.subset_df_dict[set_name][property_name].values
-        print('self.subset_df_dict[set_name]:',self.subset_df_dict[set_name])
-        print(f'property_vals: {property_vals}')
-        cost_p = lambda p: -np.mean(scipy.stats.norm(loc=p[0], scale=p[1]).logpdf(property_vals))
-
+        property_vals = self.subset_df_dict[set_name][property_name]
+        # cost_p = lambda p: -np.mean(scipy.stats.norm(loc=p[0], scale=p[1]).logpdf(property_vals))
         # p_init = [2.5, 0.5]
-        p_init = [0.3, 0.2]
-        print(-np.mean(scipy.stats.norm(loc=p_init[0], scale=p_init[1]).logpdf(property_vals)))
+        # soln  = scipy.optimize.minimize(cost_p, p_init)
+        # p_opt = soln.x
+        p_opt = [np.mean(property_vals), np.std(property_vals)]
 
-        soln  = scipy.optimize.minimize(cost_p, p_init)
-        p_opt = soln.x
-        
-        # Plot the fit
+        # # Plot the fit
         # if self.make_figs:
-        fig = plt.figure()
-        # Plot data distribution
-        plotting.custom_hist(property_vals, bins=100, density=True, color='b', label='Data')
+        #     fig = plt.figure()
+        #     # Plot data distribution
+        #     plotting.custom_hist(property_vals, bins=100, density=True, color='b', label='Data')
 
-        # Plot fitted distribution
-        t = np.linspace(min(property_vals), max(property_vals), 1000)
-        opt_pdf_t = scipy.stats.norm(loc=p_opt[0], scale=p_opt[1]).pdf(t)
-        plt.plot(t, opt_pdf_t, 'r-', label='Normal-fit')
-        plt.xlabel(property_name)
-        plt.ylabel('Density')
-        plt.legend()
-        plt.show()
+        #     # Plot fitted distribution
+        #     t = np.linspace(min(property_vals), max(property_vals), 1000)
+        #     opt_pdf_t = scipy.stats.norm(loc=p_opt[0], scale=p_opt[1]).pdf(t)
+        #     plt.plot(t, opt_pdf_t, 'r-', label='Normal-fit')
+        #     plt.xlabel(property_name)
+        #     plt.ylabel('Density')
+        #     plt.legend()
+        #     plt.show()
 
-        # Save the figure
-        if self.save_figs and self.figs_save_dir is not None:
-            file_path = str(Path(self.figs_save_dir, f"fitted_{set_name}_distribution_{property_name}.png"))
-            fig.savefig(file_path)
+        #     # Save the figure
+        #     if self.save_figs and self.figs_save_dir is not None:
+        #         file_path = str(Path(self.figs_save_dir, f"fitted_{set_name}_distribution_{property_name}.png"))
+        #         fig.savefig(file_path)
 
         return {'mu': p_opt[0], 'sigma': p_opt[1]}
 
@@ -623,17 +611,17 @@ class SMILESEncoder(object):
         
         """
         # Pad the SMILES string if necessary
-        if len(str(smiles))==self.max_num_tokens:
+        if len(smiles)==self.max_num_tokens:
             padded_smiles = smiles
-        elif len(str(smiles))<self.max_num_tokens:
-            padding = ''.join([self.pad_token]*(self.max_num_tokens-len(str(smiles))))
-            padded_smiles = str(smiles) + padding
+        elif len(smiles)<self.max_num_tokens:
+            padding = ''.join([self.pad_token]*(self.max_num_tokens-len(smiles)))
+            padded_smiles = smiles + padding
         else:
             err_msg = f"Cannot encode SMILES strings longer than max_num_tokens={self.max_num_tokens}, but got the following SMILES with {len(smiles)} tokens: {smiles}"
             raise ValueError(err_msg)
         
         # Map padded smiles to numpy array
-        return np.array([self.token_to_index_map[token] for token in str(padded_smiles)])
+        return np.array([self.token_to_index_map[token] for token in padded_smiles])
 
     def __call__(self, smiles:str) -> np.ndarray:
         """
