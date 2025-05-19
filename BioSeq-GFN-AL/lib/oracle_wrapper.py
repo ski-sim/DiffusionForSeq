@@ -2,7 +2,7 @@ import numpy as np
 
 from clamp_common_eval.defaults import get_test_oracle
 # import design_bench
-import flexs
+import flexs.landscapes
 
 
 def get_oracle(args):

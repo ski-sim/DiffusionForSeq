@@ -1,25 +1,71 @@
-# GFlowNets for Biological Sequence Design
+# Improved Off-policy Reinforcement Learning in  Biological Sequence Design
 
-This repo contains code for the paper [Biological Sequence Design with GFlowNets](http://arxiv.org/abs/2203.04115). 
+This repository provided implemented codes for the paper -- Improved Off-policy Reinforcement Learning in  Biological Sequence Design. 
+> 
 
-The code has been extracted from an internal repository of the Mila Molecule Discovery project with some changes, so the hyperparameters might vary. Original commits are lost here, but the credit goes to [@MJ10](https://github.com/MJ10) and [@bengioe](https://github.com/bengioe). **There are some stability issues in training for the GFP task with this repo.**
+Our codes are implemented based on
+- Proximal Exploration for Model-guided Protein Sequence Design ([paper](https://proceedings.mlr.press/v162/ren22a.html), [code](https://github.com/HeliXonProtein/proximal-exploration))
+- Biological Sequence Design with GFlowNets ([paper](https://proceedings.mlr.press/v162/jain22a/jain22a.pdf), [code](https://github.com/MJ10/BioSeq-GFN-AL))
 
-## Setup
-The code has been tested with Python 3.7 with CUDA 10.2 and CUDNN 8.0.
 
-1. Install design-bench from our fork [`MJ10/design-bench`](https://github.com/MJ10/design-bench). This fork only changes some dependencies and resolves some minor changes to make it compatible with our code. To install clone the repo and run `pip install -e .` in the directory where the repo is cloned.
-2. Instal the clamp-common-eval library from [MJ10/clamp-gen-data](https://github.com/MJ10/clamp-gen-data). This library handles the loading of the AMP data as well as oracles. To install clone the repo and run `pip install -r requirements.txt && pip install -e .` in the directory where the repo is cloned.
-3. Run `pip install -e requirements.txt` in this directory to install the remaining packages.
+##  Setup
+### **Step1. Create env**
 
-- **Dependency for RTX 3090**: uninstall `torch 1.10.0 + cu102`, than install other version of cuda or `torch 1.12.0+cu116`
-- **Data for TF-Bind-8**: download `tf_bind_8-SIX6_REF_R1` from [`kaist-silab/bootgen](https://github.com/kaist-silab/bootgen/tree/main/design_bench_data) to `design-bench/design_bench_data`
-
-## Running the code
-`run_amp.py`, `run_gfp.py`, and `run_tfbind.py` are the entry points for the experiments.
-
-Example:
 ```bash
-python run_tfbind.py --gen_do_explicit_Z 1 --acq_fn ucb --gen_num_iterations 2500 --gen_reward_exp 8 --gen_data_sample_per_step 8 --proxy_num_iterations 10000 --gen_Z_learning_rate 1e-1 --gen_learning_rate 1e-3
+conda create -n al python=3.7 && conda activate al
+conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.6 -c pytorch -c conda-forge
 ```
 
-Please reach out to Moksh Jain, [mokshjn00@gmail.com](mokshjn00@gmail.com) for any issues, comments, questions or suggestions.
+### **Step2. AMP setup (it requires `git-lfs` )**
+
+```bash
+git clone https://github.com/MJ10/clamp-gen-data.git
+# sudo apt-get install git-lfs
+cd clamp-gen-data
+git lfs pull
+pip install -e .
+```
+
+
+### **Step3. Install FLEXS (for TFbind, RNA Bind, GFP and AAV)**
+
+```bash
+pip install flexs
+conda install -c bioconda viennarna
+```
+
+
+### Step4. Install others
+```
+pip install -r requirements.txt
+```
+
+
+
+## Usage
+
+#### TF-Bind-8
+```
+cd BioSeq-GFN-AL
+python run_tfbind_delta.py --acq_fn ucb --radius_option adaptive --max_radius 0.5 --sigma_coeff 5
+python run_tfbind_delta.py --acq_fn ucb --radius_option adaptive --max_radius 0.5 --sigma_coeff 5 --hard_tf
+```
+
+#### AMP
+```
+cd BioSeq-GFN-AL
+python run_amp_delta.py --acq_fn ucb --radius_option adaptive --max_radius 0.5 --sigma_coeff 1
+``` 
+
+#### RNA and protein designs (FLEXS)
+```
+cd flexs
+python run_flexs.py --alg=gfn-al --net=cnn --ensemble_rule ucb --task=rna1 --radius_option adaptive --max_radius 0.5 --sigma_coeff 5
+python run_flexs.py --alg=gfn-al --net=cnn --ensemble_rule ucb --task=gfp --radius_option adaptive --max_radius 0.05 --sigma_coeff 1
+python run_flexs.py --alg=gfn-al --net=cnn --ensemble_rule ucb --task=aav --radius_option adaptive --max_radius 0.05 --sigma_coeff 0.1
+```
+
+`rna1`, `rna2`, and `rna3` correspond to RNA-A, RNA-B, and RNA-C, respectively.
+
+Note: we use baselines implementation in [FLEXS](https://github.com/samsinai/FLEXS) 
+

@@ -11,3 +11,5 @@ results/
 wandb/
 tmp/
 *.zip
+/clamp-gen-data
+/flexs/

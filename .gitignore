@@ -13,3 +13,4 @@ tmp/
 *.zip
 /clamp-gen-data
 /flexs/
+trained/
