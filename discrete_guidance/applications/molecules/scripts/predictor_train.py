@@ -168,3 +168,8 @@ def predictor_train(args, round, dataset):
             logger.info('-'*100)
 
 
+    orchestrator.manager.load_model(model_name) 
+    model = orchestrator.manager.models_dict[model_name]
+    model.to(cfg.device)
+    model.eval()
+    return model

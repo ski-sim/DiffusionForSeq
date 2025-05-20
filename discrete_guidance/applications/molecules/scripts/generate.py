@@ -1,12 +1,13 @@
 # Import public modules
 import argparse
+import torch
 import collections
 import copy
 import time
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
-
+import numpy as np
 # Import custom modules
 from discrete_guidance.applications.molecules.src import bookkeeping
 from discrete_guidance.applications.molecules.src import cheminf
@@ -20,7 +21,7 @@ from discrete_guidance.applications.molecules.src import utils
 from collections import defaultdict
 
 # Only run as main
-def diffusion_sample(args, oracle, round, dataset):
+def diffusion_sample(args, predictor, oracle, round, dataset):
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
     # parser.add_argument('-c', '--config',                     type=str, required=True, help='[Required] Path to (generation) config file.')
@@ -154,6 +155,7 @@ def diffusion_sample(args, oracle, round, dataset):
     generated_df_list    = list()
     global_start_time    = time.time()
     logger.info(f"Will generate sequences are at least {num_uvnswcs_requested} sequences have been sampled.")
+    total_x_generated = []
     for iteration in range(generation_cfg.sampler.max_iterations):
         # If no property is specified, use unconditional sampling
         if target_property_value is None:
@@ -183,19 +185,36 @@ def diffusion_sample(args, oracle, round, dataset):
                                                 grad_approx=generation_cfg.sampler.grad_approx,
                                                 batch_size=generation_cfg.sampler.batch_size)
 
-
+         
+        # for proxy evaluation
+        total_x_generated.append(x_generated)
         # Analyze the generated x
         # filtering here?
         
         # generated sample들을 decoding? 그럴 필요 없는데
         # 원소의 기호를 index숫자로 바꿔서 diffusion으로 넣어준 것이고, 이게 잘 됬다면 그냥 포함시켜도 상관없을듯
         generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(smiles_encoded)) for smiles_encoded in x_generated]
+
         generated_df_list.extend(generated_smiles_list)
         
         if len(generated_df_list) > num_uvnswcs_requested:
             generated_df_list = generated_df_list[:num_uvnswcs_requested]
             break
-            
+    # stack generated samples , shape (500, 8)
+    total_x  = np.vstack(total_x_generated)[:num_uvnswcs_requested, :]
+    # evaluate the generated samples by oracle
+    total_x = total_x.astype(int)
+    vals = oracle(total_x).reshape(-1)
+    
+    batch_data_t = {}
+    if isinstance(total_x, np.ndarray):
+        x = torch.from_numpy(total_x).to(args.device)
+    else:
+        x = total_x
+    batch_data_t['x'] = x
+    t =  torch.ones(len(vals), dtype=torch.long).to(args.device)
+    proxy_scores = predictor(batch_data_t,t,is_x_onehot=False)
+    proxy_scores = proxy_scores.detach().cpu().numpy()
         # filtering duplicated or invalid smiles
     #     analysis_dict = utils.analyze_generated_smiles(generated_smiles_list, 
     #                                                    orchestrator.molecules_data_handler.subset_df_dict['train']['nswcs'],
@@ -284,11 +303,19 @@ def diffusion_sample(args, oracle, round, dataset):
     # Save this DataFrame
     file_name = f'samples_table_t{generation_cfg.sampler.guide_temp}_w{target_property_value}_n{num_uvnswcs_requested}.tsv'
     file_path = str(Path(generation_cfg.outputs_dir, file_name))
-    generated_df_list = pd.Series(generated_df_list)
-    generated_df_list.to_csv(file_path, index=False, sep='\t')
-    # generated_df.to_csv(file_path, index=False, sep='\t')
+    # generated_df_list = pd.Series(generated_df_list)
+    generated_df = pd.DataFrame({
+    'sequence': generated_df_list,
+    'reward': vals
+    })
+    generated_df.to_csv(file_path, index=False, sep='\t')
     logger.info(f"Stored the samples as table in: {file_path}")
-    logger.info(f"Number of unique valid nswcs: {len(generated_df_list)}")
+    logger.info(f"Number of unique valid nswcs: {len(generated_df)}")
+
+    return (total_x.tolist(), vals), proxy_scores
+
+
+
 
     # # Get all unique valid smiles
     # filtered_df = generated_df[generated_df['valid']==True]

@@ -629,6 +629,7 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
     args.logger.add_scalar("top-128-dists", dist100, use_context=False)
     args.logger.add_object("top-128-seqs", top100[0])
     queried_dist = mean_pairwise_distances(args, new_batch[0])
+    
     queried_corrlation = spearman_correlation(new_batch[1], new_batch[2])
     
     if args.task not in ['gfp', 'aav']:
@@ -700,11 +701,15 @@ def train(args, oracle, dataset):  # runner.run()
         print(f"+++++++++++++++++++Iteration {round+1} starts+++++++++++++")
         diffusion_train(args, round, dataset)
         print("+++++++++++++++++++diffusion training done+++++++++++++")
-        predictor_train(args, round, dataset)
+        predictor = predictor_train(args, round, dataset).to(args.device)
         print("+++++++++++++++++++predictor training done+++++++++++++")
         # diffusion 샘플링
         # batch, proxy_score = sample_batch(args, rollout_worker, generator, oracle, round=round, dataset=dataset)
-        batch = diffusion_sample(args, oracle, round=round, dataset=dataset)
+        
+
+
+
+        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
         args.logger.add_object("collected_seqs", batch[0])
@@ -715,7 +720,7 @@ def train(args, oracle, dataset):  # runner.run()
         new_seqs = ["".join([str(i) for i in x]) for x in batch[0]]
         # 축적된 dataset에 대한 performance, diversity등의 평가 진행
         # # 우리는 일단 스킵
-        # rst = log_overall_metrics(args, dataset, round+1, new_batch=(new_seqs, batch[1], proxy_score), collected=True, rst=rst)
+        rst = log_overall_metrics(args, dataset, round+1, new_batch=(new_seqs, batch[1], proxy_score), collected=True, rst=rst)
         # if round != args.num_rounds - 1:
         #     proxy.update(dataset)
         args.logger.save(args.save_path, args)

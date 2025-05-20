@@ -17,4 +17,4 @@ sampler:
   seed: 30
   x1_temp: 1.0
 state: generation
-trained_run_folder_dir: ./trained/2025-05-19/no_overrides
+trained_run_folder_dir: ./trained/2025-05-20/no_overrides

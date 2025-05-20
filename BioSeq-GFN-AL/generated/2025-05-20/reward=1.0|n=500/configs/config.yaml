@@ -1,6 +1,6 @@
 base_dir: .
-checkpoints_dir: generated/2025-05-19/reward=1.0|n=500/checkpoints
-configs_dir: generated/2025-05-19/reward=1.0|n=500/configs
+checkpoints_dir: generated/2025-05-20/reward=1.0|n=500/checkpoints
+configs_dir: generated/2025-05-20/reward=1.0|n=500/configs
 data:
   S: 5
   categorical: true
@@ -29,9 +29,9 @@ data:
     validation_train_ratio: 0.2
   shape: 8
   train_num_tokens_freq_dict:
-    '1': 1.0
+    '8': 1.0
   train_property_sigma_dict:
-    reward: -165.20230720318796
+    reward: 0.08076504357692149
   which_dataset: sequence
 denoising_model:
   activation_fn:
@@ -47,7 +47,7 @@ denoising_model:
   stack_time: true
 device: cuda
 eps_ratio: 1e-9
-figs_save_dir: generated/2025-05-19/reward=1.0|n=500/figs_saved
+figs_save_dir: generated/2025-05-20/reward=1.0|n=500/figs_saved
 fix_pads: false
 load_data: true
 logging: true
@@ -63,8 +63,8 @@ logp_predictor_model:
   stack_time: false
   y_guide_name: logp
 make_figs: true
-models_load_dir: generated/2025-05-19/reward=1.0|n=500/models_saved
-models_save_dir: generated/2025-05-19/reward=1.0|n=500/models_saved
+models_load_dir: generated/2025-05-20/reward=1.0|n=500/models_saved
+models_save_dir: generated/2025-05-20/reward=1.0|n=500/models_saved
 num_gpus: 1
 num_heavy_atoms_predictor_model:
   activation_fn:
@@ -90,7 +90,7 @@ num_rings_predictor_model:
   type: normal
   y_guide_name: num_rings
 num_timesteps: null
-outputs_dir: generated/2025-05-19/reward=1.0|n=500
+outputs_dir: generated/2025-05-20/reward=1.0|n=500
 reward_predictor_model:
   activation_fn:
     name: ReLU
@@ -118,12 +118,12 @@ sampler:
   x1_temp: 1.0
 save_figs: true
 state: generation
-trained_run_folder_dir: ./trained/2025-05-19/no_overrides
+trained_run_folder_dir: ./trained/2025-05-20/no_overrides
 training:
   denoising_model:
     clip_grad: false
     lr: 0.001
-    num_epochs: 1
+    num_epochs: 2
     optimizer: Adam
     seed: 42
     warmup: 0
@@ -144,7 +144,7 @@ training:
   reward_predictor_model:
     clip_grad: true
     lr: 0.0001
-    num_epochs: 10
+    num_epochs: 2
     optimizer: Adam
     seed: 42
     warmup: 0

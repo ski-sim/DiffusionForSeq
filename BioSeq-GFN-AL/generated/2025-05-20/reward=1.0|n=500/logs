@@ -1,25 +1,24 @@
-[2025-05-19 21:03:10] [INFO]: Guided generation towards target: reward=1
-[2025-05-19 21:03:10] [INFO]: Generate until the sampled number of unique valid nswcs is: 500
-[2025-05-19 21:03:10] [INFO]: Loaded the 'sequence' preprocessed dataset from: ../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.tsv
-[2025-05-19 21:03:10] [INFO]: Maximum number of tokens (over all sequence): 8
-[2025-05-19 21:03:10] [INFO]: Unique tokens (#4): {'2', '3', '0', '1'}
-[2025-05-19 21:03:10] [INFO]: self.smiles_encoder.token_alphabet_size : 5
-[2025-05-19 21:03:10] [INFO]: self.smiles_encoder.token_to_index_map : {'0': 0, '1': 1, '2': 2, '3': 3, '$': 4}
-[2025-05-19 21:03:10] [INFO]: #train: 23686
-[2025-05-19 21:03:10] [INFO]: #validation: 5922
-[2025-05-19 21:03:10] [INFO]: #train_reward: 23686
-[2025-05-19 21:03:11] [INFO]: cfg.data.shape: 8
-[2025-05-19 21:03:11] [INFO]: cfg.data.S: 5
-[2025-05-19 21:03:11] [INFO]: Stack time to x as denoising model input: True
-[2025-05-19 21:03:15] [INFO]: Stack time to x as reward-predictor model input: False
-[2025-05-19 21:03:15] [INFO]: Using the continuous-time framework (DFM for denoising model and DG for guidance).
-[2025-05-19 21:03:15] [INFO]: 
-[2025-05-19 21:03:16] [INFO]: Loaded 'denoising_model' from: trained/2025-05-19/no_overrides/models_saved/denoising_model.pt
-[2025-05-19 21:03:16] [INFO]: Loaded 'reward_predictor_model' from: trained/2025-05-19/no_overrides/models_saved/reward_predictor_model.pt
-[2025-05-19 21:03:16] [INFO]: Overrides: {}
-[2025-05-19 21:03:16] [INFO]: Overriden config: base_dir: .
-checkpoints_dir: generated/2025-05-19/reward=1.0|n=500/checkpoints
-configs_dir: generated/2025-05-19/reward=1.0|n=500/configs
+[2025-05-20 18:25:48] [INFO]: Guided generation towards target: reward=1
+[2025-05-20 18:25:48] [INFO]: Generate until the sampled number of unique valid nswcs is: 500
+[2025-05-20 18:25:48] [INFO]: Loaded the 'sequence' preprocessed dataset from: ../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv
+[2025-05-20 18:25:48] [INFO]: Maximum number of tokens (over all sequence): 8
+[2025-05-20 18:25:48] [INFO]: Unique tokens (#4): {'0', '2', '3', '1'}
+[2025-05-20 18:25:48] [INFO]: self.smiles_encoder.token_alphabet_size : 5
+[2025-05-20 18:25:48] [INFO]: self.smiles_encoder.token_to_index_map : {'0': 0, '1': 1, '2': 2, '3': 3, '$': 4}
+[2025-05-20 18:25:48] [INFO]: #train: 24044
+[2025-05-20 18:25:48] [INFO]: #validation: 6012
+[2025-05-20 18:25:48] [INFO]: cfg.data.shape: 8
+[2025-05-20 18:25:48] [INFO]: cfg.data.S: 5
+[2025-05-20 18:25:48] [INFO]: Stack time to x as denoising model input: True
+[2025-05-20 18:25:51] [INFO]: Stack time to x as reward-predictor model input: False
+[2025-05-20 18:25:51] [INFO]: Using the continuous-time framework (DFM for denoising model and DG for guidance).
+[2025-05-20 18:25:51] [INFO]: 
+[2025-05-20 18:25:52] [INFO]: Loaded 'denoising_model' from: trained/2025-05-20/no_overrides/models_saved/denoising_model.pt
+[2025-05-20 18:25:52] [INFO]: Loaded 'reward_predictor_model' from: trained/2025-05-20/no_overrides/models_saved/reward_predictor_model.pt
+[2025-05-20 18:25:52] [INFO]: Overrides: {}
+[2025-05-20 18:25:52] [INFO]: Overriden config: base_dir: .
+checkpoints_dir: generated/2025-05-20/reward=1.0|n=500/checkpoints
+configs_dir: generated/2025-05-20/reward=1.0|n=500/configs
 data:
   S: 5
   categorical: true
@@ -48,9 +47,9 @@ data:
     validation_train_ratio: 0.2
   shape: 8
   train_num_tokens_freq_dict:
-    '1': 1.0
+    '8': 1.0
   train_property_sigma_dict:
-    reward: -165.20230720318796
+    reward: 0.08076504357692149
   which_dataset: sequence
 denoising_model:
   activation_fn:
@@ -66,7 +65,7 @@ denoising_model:
   stack_time: true
 device: cuda
 eps_ratio: 1e-9
-figs_save_dir: generated/2025-05-19/reward=1.0|n=500/figs_saved
+figs_save_dir: generated/2025-05-20/reward=1.0|n=500/figs_saved
 fix_pads: false
 load_data: true
 logging: true
@@ -82,8 +81,8 @@ logp_predictor_model:
   stack_time: false
   y_guide_name: logp
 make_figs: true
-models_load_dir: generated/2025-05-19/reward=1.0|n=500/models_saved
-models_save_dir: generated/2025-05-19/reward=1.0|n=500/models_saved
+models_load_dir: generated/2025-05-20/reward=1.0|n=500/models_saved
+models_save_dir: generated/2025-05-20/reward=1.0|n=500/models_saved
 num_gpus: 1
 num_heavy_atoms_predictor_model:
   activation_fn:
@@ -109,7 +108,7 @@ num_rings_predictor_model:
   type: normal
   y_guide_name: num_rings
 num_timesteps: null
-outputs_dir: generated/2025-05-19/reward=1.0|n=500
+outputs_dir: generated/2025-05-20/reward=1.0|n=500
 reward_predictor_model:
   activation_fn:
     name: ReLU
@@ -137,12 +136,12 @@ sampler:
   x1_temp: 1.0
 save_figs: true
 state: generation
-trained_run_folder_dir: ./trained/2025-05-19/no_overrides
+trained_run_folder_dir: ./trained/2025-05-20/no_overrides
 training:
   denoising_model:
     clip_grad: false
     lr: 0.001
-    num_epochs: 1
+    num_epochs: 2
     optimizer: Adam
     seed: 42
     warmup: 0
@@ -163,7 +162,7 @@ training:
   reward_predictor_model:
     clip_grad: true
     lr: 0.0001
-    num_epochs: 10
+    num_epochs: 2
     optimizer: Adam
     seed: 42
     warmup: 0
@@ -187,5 +186,5 @@ waiting_time_predictor_model:
   type: normal
   y_guide_name: waiting_time
 
-[2025-05-19 21:03:16] [INFO]: Will generate sequences are at least 500 sequences have been sampled.
-[2025-05-19 21:03:16] [INFO]: Predictor model name: reward_predictor_model
+[2025-05-20 18:25:52] [INFO]: Will generate sequences are at least 500 sequences have been sampled.
+[2025-05-20 18:25:52] [INFO]: Predictor model name: reward_predictor_model
