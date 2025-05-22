@@ -125,7 +125,8 @@ parser.add_argument("--proxy_num_iterations", default=3000, type=int)
 parser.add_argument("--proxy_num_dropout_samples", default=25, type=int)
 parser.add_argument("--proxy_pos_ratio", default=0.9, type=float)
 
-
+parser.add_argument("--property_name", default='reward')
+parser.add_argument("--target_property_value", default=2, type=float)
 class MbStack:
     def __init__(self, f):
         self.stack = []
@@ -687,6 +688,7 @@ def train(args, oracle, dataset):  # runner.run()
     # predictor 빌드
     # predictor 훈련
     rst = None
+    PERCENTILE = 0.1
     # 올바른 데이터 참조는 round 횟수로 한다
     for round in range(args.num_rounds):
         args.logger.set_context(f"iter_{round+1}")
@@ -709,6 +711,8 @@ def train(args, oracle, dataset):  # runner.run()
       
         
         seqs, scores = dataset.get_all_data(return_as_str=False)
+        target_property_value = np.quantile(scores, PERCENTILE)
+        
         # using proxy
         t =  torch.ones(len(scores), dtype=torch.long).to(args.device)
         batch_data_t = {}
@@ -727,7 +731,7 @@ def train(args, oracle, dataset):  # runner.run()
         print("+++++++++++++++++++radius+++++++++++++")
         print(radius)
   
-        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius)
+        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
         args.logger.add_object("collected_seqs", batch[0])
@@ -742,7 +746,7 @@ def train(args, oracle, dataset):  # runner.run()
         # if round != args.num_rounds - 1:
         #     proxy.update(dataset)
         args.logger.save(args.save_path, args)
-
+        PERCENTILE =  min(1.0, 1.1*PERCENTILE)
 
 # our base directory is '/home/son9ih/delta_cs/discrete_guidance/applications/molecules'
 def main(args):
