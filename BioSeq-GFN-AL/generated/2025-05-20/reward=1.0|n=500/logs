@@ -1,22 +1,22 @@
-[2025-05-20 18:25:48] [INFO]: Guided generation towards target: reward=1
-[2025-05-20 18:25:48] [INFO]: Generate until the sampled number of unique valid nswcs is: 500
-[2025-05-20 18:25:48] [INFO]: Loaded the 'sequence' preprocessed dataset from: ../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv
-[2025-05-20 18:25:48] [INFO]: Maximum number of tokens (over all sequence): 8
-[2025-05-20 18:25:48] [INFO]: Unique tokens (#4): {'0', '2', '3', '1'}
-[2025-05-20 18:25:48] [INFO]: self.smiles_encoder.token_alphabet_size : 5
-[2025-05-20 18:25:48] [INFO]: self.smiles_encoder.token_to_index_map : {'0': 0, '1': 1, '2': 2, '3': 3, '$': 4}
-[2025-05-20 18:25:48] [INFO]: #train: 24044
-[2025-05-20 18:25:48] [INFO]: #validation: 6012
-[2025-05-20 18:25:48] [INFO]: cfg.data.shape: 8
-[2025-05-20 18:25:48] [INFO]: cfg.data.S: 5
-[2025-05-20 18:25:48] [INFO]: Stack time to x as denoising model input: True
-[2025-05-20 18:25:51] [INFO]: Stack time to x as reward-predictor model input: False
-[2025-05-20 18:25:51] [INFO]: Using the continuous-time framework (DFM for denoising model and DG for guidance).
-[2025-05-20 18:25:51] [INFO]: 
-[2025-05-20 18:25:52] [INFO]: Loaded 'denoising_model' from: trained/2025-05-20/no_overrides/models_saved/denoising_model.pt
-[2025-05-20 18:25:52] [INFO]: Loaded 'reward_predictor_model' from: trained/2025-05-20/no_overrides/models_saved/reward_predictor_model.pt
-[2025-05-20 18:25:52] [INFO]: Overrides: {}
-[2025-05-20 18:25:52] [INFO]: Overriden config: base_dir: .
+[2025-05-20 18:26:53] [INFO]: Guided generation towards target: reward=1
+[2025-05-20 18:26:53] [INFO]: Generate until the sampled number of unique valid nswcs is: 500
+[2025-05-20 18:26:53] [INFO]: Loaded the 'sequence' preprocessed dataset from: ../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv
+[2025-05-20 18:26:53] [INFO]: Maximum number of tokens (over all sequence): 8
+[2025-05-20 18:26:53] [INFO]: Unique tokens (#4): {'0', '2', '3', '1'}
+[2025-05-20 18:26:53] [INFO]: self.smiles_encoder.token_alphabet_size : 5
+[2025-05-20 18:26:53] [INFO]: self.smiles_encoder.token_to_index_map : {'0': 0, '1': 1, '2': 2, '3': 3, '$': 4}
+[2025-05-20 18:26:53] [INFO]: #train: 24403
+[2025-05-20 18:26:53] [INFO]: #validation: 6101
+[2025-05-20 18:26:53] [INFO]: cfg.data.shape: 8
+[2025-05-20 18:26:53] [INFO]: cfg.data.S: 5
+[2025-05-20 18:26:53] [INFO]: Stack time to x as denoising model input: True
+[2025-05-20 18:26:55] [INFO]: Stack time to x as reward-predictor model input: False
+[2025-05-20 18:26:55] [INFO]: Using the continuous-time framework (DFM for denoising model and DG for guidance).
+[2025-05-20 18:26:55] [INFO]: 
+[2025-05-20 18:26:56] [INFO]: Loaded 'denoising_model' from: trained/2025-05-20/no_overrides/models_saved/denoising_model.pt
+[2025-05-20 18:26:56] [INFO]: Loaded 'reward_predictor_model' from: trained/2025-05-20/no_overrides/models_saved/reward_predictor_model.pt
+[2025-05-20 18:26:56] [INFO]: Overrides: {}
+[2025-05-20 18:26:56] [INFO]: Overriden config: base_dir: .
 checkpoints_dir: generated/2025-05-20/reward=1.0|n=500/checkpoints
 configs_dir: generated/2025-05-20/reward=1.0|n=500/configs
 data:
@@ -49,7 +49,7 @@ data:
   train_num_tokens_freq_dict:
     '8': 1.0
   train_property_sigma_dict:
-    reward: 0.08076504357692149
+    reward: 0.08492971087717247
   which_dataset: sequence
 denoising_model:
   activation_fn:
@@ -186,5 +186,8 @@ waiting_time_predictor_model:
   type: normal
   y_guide_name: waiting_time
 
-[2025-05-20 18:25:52] [INFO]: Will generate sequences are at least 500 sequences have been sampled.
-[2025-05-20 18:25:52] [INFO]: Predictor model name: reward_predictor_model
+[2025-05-20 18:26:56] [INFO]: Will generate sequences are at least 500 sequences have been sampled.
+[2025-05-20 18:26:56] [INFO]: Predictor model name: reward_predictor_model
+[2025-05-20 18:27:03] [INFO]: Predictor model name: reward_predictor_model
+[2025-05-20 18:27:09] [INFO]: Predictor model name: reward_predictor_model
+[2025-05-20 18:27:16] [INFO]: Predictor model name: reward_predictor_model

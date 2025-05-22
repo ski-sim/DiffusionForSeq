@@ -34,6 +34,8 @@ def flow_matching_sampling(
     purity_temp: float = 1.0,
     num_unpadded_freq_dict: Optional[Dict[int, float]] = None,
     eps: float = 1e-9,
+    dataset: Optional[List[torch.Tensor]] = None,
+    local_search: Optional[bool] = False,
 ):
     """
     Generates samples using flow matching with optional predictor or predictor-free guidance.
@@ -106,6 +108,8 @@ def flow_matching_sampling(
             purity_temp=purity_temp,
             num_unpadded_freq_dict=num_unpadded_freq_dict,
             eps=eps,
+            dataset=dataset,
+            local_search=local_search,  
         )
         samples.append(x1)
         counter += batch_size
@@ -142,7 +146,9 @@ def flow_matching_sampling_masking_euler(
     do_purity_sampling: bool = False,
     purity_temp: float = 1.0,
     num_unpadded_freq_dict: Optional[Dict[int, float]] = None,
-    eps: float = 1e-9
+    eps: float = 1e-9,
+    dataset: Optional[List[torch.Tensor]] = None,
+    local_search: Optional[bool] = False,
 ) -> np.ndarray:
     """
     Generates samples using Euler integration of the discrete flow matching model with optional guidance.
@@ -184,7 +190,19 @@ def flow_matching_sampling_masking_euler(
     B = batch_size
 
     # Sample initial xt
-    xt = mask_idx * torch.ones((B, D), dtype=torch.long, device=device)
+    if local_search:
+        seqs, scores = dataset.get_all_data(return_as_str=False)
+
+        scores = torch.tensor(scores, dtype=torch.float)
+        probs = F.softmax(scores, dim=0)
+        sampled_indices = torch.multinomial(probs, num_samples=B, replacement=False)
+        sampled_seqs = [seqs[i] for i in sampled_indices]
+        sample_action_prob = 0.3
+        mask = torch.rand(len(sampled_seqs)) > sample_action_prob
+        xt = torch.tensor(sampled_seqs, dtype=torch.long, device=device)
+        xt[mask] = mask_idx
+    else:
+        xt = mask_idx * torch.ones((B, D), dtype=torch.long, device=device)
 
     t = 0.0
     num_steps = int(1 / dt)  # TODO: Use ceil or int?

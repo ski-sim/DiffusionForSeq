@@ -17,11 +17,12 @@ from discrete_guidance.applications.molecules.src import logging
 from discrete_guidance.applications.molecules.src import managers
 from discrete_guidance.applications.molecules.src import plotting
 from discrete_guidance.applications.molecules.src import utils
+import matplotlib.pyplot as plt
 
 from collections import defaultdict
 
 # Only run as main
-def diffusion_sample(args, predictor, oracle, round, dataset):
+def diffusion_sample(args, predictor, oracle, round, dataset,local_search):
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
     # parser.add_argument('-c', '--config',                     type=str, required=True, help='[Required] Path to (generation) config file.')
@@ -163,7 +164,9 @@ def diffusion_sample(args, predictor, oracle, round, dataset):
                                                 seed=None, # Only use the external seed
                                                 stochasticity=generation_cfg.sampler.noise,
                                                 dt=generation_cfg.sampler.dt,
-                                                batch_size=generation_cfg.sampler.batch_size)
+                                                batch_size=generation_cfg.sampler.batch_size,
+                                                dataset=dataset,
+                                                local_search=local_search)
         else:
             # Construct the predictor model name based on the property name
             predictor_model_name = f"{property_name}_predictor_model"
@@ -183,7 +186,9 @@ def diffusion_sample(args, predictor, oracle, round, dataset):
                                                 predictor_y_dict={predictor_model_name: target_property_value},
                                                 guide_temp=generation_cfg.sampler.guide_temp,
                                                 grad_approx=generation_cfg.sampler.grad_approx,
-                                                batch_size=generation_cfg.sampler.batch_size)
+                                                batch_size=generation_cfg.sampler.batch_size,
+                                                dataset=dataset,
+                                                local_search=local_search)
 
          
         # for proxy evaluation
@@ -301,7 +306,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset):
     # generated_df = generated_df[:args.num_valid_molecule_samples]
 
     # Save this DataFrame
-    file_name = f'samples_table_t{generation_cfg.sampler.guide_temp}_w{target_property_value}_n{num_uvnswcs_requested}.tsv'
+    file_name = f'samples_table_t{generation_cfg.sampler.guide_temp}_w{target_property_value}_n{num_uvnswcs_requested}_r{round}.tsv'
     file_path = str(Path(generation_cfg.outputs_dir, file_name))
     # generated_df_list = pd.Series(generated_df_list)
     generated_df = pd.DataFrame({
@@ -309,6 +314,21 @@ def diffusion_sample(args, predictor, oracle, round, dataset):
     'reward': vals
     })
     generated_df.to_csv(file_path, index=False, sep='\t')
+
+
+
+    # 히스토그램 그리기
+    plt.figure(figsize=(8,6))
+    plt.hist(vals, bins=30, color='blue', alpha=0.7)
+    plt.title(f'Histogram of round{round}')
+    plt.xlabel('Reward')
+    plt.ylabel('Frequency')
+    hist_file_name = file_name.replace('.tsv', '_hist.png')
+    hist_file_path = str(Path(generation_cfg.outputs_dir, hist_file_name))
+
+    plt.savefig(hist_file_path)
+    plt.close()
+
     logger.info(f"Stored the samples as table in: {file_path}")
     logger.info(f"Number of unique valid nswcs: {len(generated_df)}")
 

@@ -4,6 +4,7 @@ import pickle
 import itertools
 import time
 import wandb
+import matplotlib.pyplot as plt
 
 import pandas as pd
 import numpy as np
@@ -82,6 +83,7 @@ parser.add_argument("--gen_reward_min", default=0, type=float)
 parser.add_argument("--gen_L2", default=0, type=float)
 parser.add_argument("--gen_partition_init", default=50, type=float)
 parser.add_argument("--diffusion_generator", action="store_true", default=False)
+parser.add_argument("--local_search", action="store_true", default=True)
 
 # Soft-QLearning/GFlownet gen
 parser.add_argument("--gen_reward_exp_ramping", default=3, type=float)
@@ -524,7 +526,6 @@ def mean_pairwise_distances(args, seqs):
         dists.append(edit_dist(*pair))
     return np.mean(dists)
 
-
 def mean_novelty(seqs, ref_seqs):
     novelty = [min([edit_dist(seq, ref) for ref in ref_seqs]) for seq in seqs]
     return np.mean(novelty)
@@ -706,10 +707,7 @@ def train(args, oracle, dataset):  # runner.run()
         # diffusion 샘플링
         # batch, proxy_score = sample_batch(args, rollout_worker, generator, oracle, round=round, dataset=dataset)
         
-
-
-
-        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset)
+        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset, local_search=args.local_search)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
         args.logger.add_object("collected_seqs", batch[0])

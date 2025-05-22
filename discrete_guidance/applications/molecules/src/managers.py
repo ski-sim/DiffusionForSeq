@@ -6,7 +6,7 @@ import numpy as np
 from numbers import Number
 from numpy.typing import ArrayLike
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 # Import custom modules
 from . import utils
@@ -511,7 +511,9 @@ class DFMManager(object):
                  predictor_y_dict:dict={},
                  grad_approx:bool=False,
                  guide_temp:float=1.0, # Guidance temperature
-                 batch_size:int=500) -> torch.tensor:
+                 batch_size:int=500,
+                 dataset: Optional[List[torch.Tensor]] = None,
+                 local_search:bool=True) -> torch.tensor:
         """
         Generate x-samples.
 
@@ -614,7 +616,9 @@ class DFMManager(object):
                                                    # 'train_num_tokens_freq_dict' is the distribution of the 
                                                    # number of unpadded tokens in the training set:
                                                    num_unpadded_freq_dict=self.cfg.data.get('train_num_tokens_freq_dict', None),
-                                                   eps = 1e-9)
+                                                   eps = 1e-9,
+                                                   dataset=dataset,
+                                                   local_search=local_search)   
         else:
             self.display("Sample using discrete-framework (D3PM/DiGress).")
             self.display("Remark: The input arguments 'dt' and 'stochasticity' are not used in this framework.")

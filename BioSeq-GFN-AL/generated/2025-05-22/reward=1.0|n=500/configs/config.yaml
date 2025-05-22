@@ -1,6 +1,6 @@
 base_dir: .
-checkpoints_dir: generated/2025-05-20/reward=1.0|n=500/checkpoints
-configs_dir: generated/2025-05-20/reward=1.0|n=500/configs
+checkpoints_dir: generated/2025-05-22/reward=1.0|n=500/checkpoints
+configs_dir: generated/2025-05-22/reward=1.0|n=500/configs
 data:
   S: 5
   categorical: true
@@ -31,7 +31,7 @@ data:
   train_num_tokens_freq_dict:
     '8': 1.0
   train_property_sigma_dict:
-    reward: 0.08492971087717247
+    reward: 0.10665700096911458
   which_dataset: sequence
 denoising_model:
   activation_fn:
@@ -47,7 +47,7 @@ denoising_model:
   stack_time: true
 device: cuda
 eps_ratio: 1e-9
-figs_save_dir: generated/2025-05-20/reward=1.0|n=500/figs_saved
+figs_save_dir: generated/2025-05-22/reward=1.0|n=500/figs_saved
 fix_pads: false
 load_data: true
 logging: true
@@ -63,8 +63,8 @@ logp_predictor_model:
   stack_time: false
   y_guide_name: logp
 make_figs: true
-models_load_dir: generated/2025-05-20/reward=1.0|n=500/models_saved
-models_save_dir: generated/2025-05-20/reward=1.0|n=500/models_saved
+models_load_dir: generated/2025-05-22/reward=1.0|n=500/models_saved
+models_save_dir: generated/2025-05-22/reward=1.0|n=500/models_saved
 num_gpus: 1
 num_heavy_atoms_predictor_model:
   activation_fn:
@@ -90,7 +90,7 @@ num_rings_predictor_model:
   type: normal
   y_guide_name: num_rings
 num_timesteps: null
-outputs_dir: generated/2025-05-20/reward=1.0|n=500
+outputs_dir: generated/2025-05-22/reward=1.0|n=500
 reward_predictor_model:
   activation_fn:
     name: ReLU
