@@ -8,6 +8,280 @@ from typing import Optional
 # Import custom modules
 from . import utils
 
+import torch.nn.functional as F
+import torch.nn as nn
+import copy
+
+def count_params(model):
+    return sum([p.numel() for p in model.parameters()])
+
+class GaussianFourierProjection(nn.Module):
+    """
+    Gaussian random features for encoding time steps.
+    """
+
+    def __init__(self, embed_dim, scale=30.0):
+        super().__init__()
+        # Randomly sample weights during initialization. These weights are fixed
+        # during optimization and are not trainable.
+        self.W = nn.Parameter(torch.randn(embed_dim // 2) * scale, requires_grad=False)
+
+    def forward(self, x):
+        x_proj = x[:, None] * self.W[None, :] * 2 * np.pi
+        return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
+
+
+class Dense(nn.Module):
+    """
+    A fully connected layer that reshapes outputs to feature maps.
+    """
+
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.dense = nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        return self.dense(x)[...]
+
+
+class DenoisingModel_CNN(torch.nn.Module):
+    """
+    CNN-based Denoising Model for discrete diffusion, adapted from the original CNNModel
+    to fit the existing codebase structure.
+    """
+    
+    def __init__(self, 
+                 cfg: ml_collections.ConfigDict, 
+                 time_encoder: object, 
+                 logger: Optional[object] = None) -> None:
+        """
+        Args:
+            cfg (ml_collections.ConfigDict): Config dictionary.
+            time_encoder (object): Time encoder object.
+            logger (None or object): Optional logger object.
+                If None, no logger is used.
+                (Default: None)
+        """
+        # Initialize the parent class
+        super().__init__()
+
+        # Assign inputs to class attributes
+        self.D = cfg.data.shape  # Sequence length
+        self.S = cfg.data.S      # Alphabet size (vocabulary size)
+        self.pad_index = cfg.data.pad_index
+        self.logger = logger
+        
+        # CNN specific configurations
+        self.hidden_dim = cfg.denoising_model.get('hidden_dim', 256)
+        self.num_cnn_stacks = cfg.denoising_model.get('num_cnn_stacks', 2)
+        self.p_dropout = cfg.denoising_model.get('p_dropout', 0.1)
+        self.eps = float(cfg.denoising_model.get('eps', 1e-8))
+        self.stack_time = cfg.denoising_model.get('stack_time', True)
+        
+        self.display(f"CNN Denoising Model - D: {self.D}, S: {self.S}")
+        self.display(f"Stack time to x as CNN denoising model input: {self.stack_time}")
+
+        # Set time encoder
+        self.time_encoder = time_encoder
+        self.encode_t = lambda t: time_encoder(t)
+        
+        # Input embedding layer
+        # Convert one-hot encoded input to hidden dimension
+        self.linear = nn.Conv1d(self.S, self.hidden_dim, kernel_size=9, padding=4)
+        
+        # Time embedding
+        self.time_embedder = nn.Sequential(
+            GaussianFourierProjection(embed_dim=self.hidden_dim),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
+        )
+
+        # Define CNN layers with different dilation rates
+        self.num_layers = 5 * self.num_cnn_stacks
+        base_convs = [
+            nn.Conv1d(self.hidden_dim, self.hidden_dim, kernel_size=9, padding=4),
+            nn.Conv1d(self.hidden_dim, self.hidden_dim, kernel_size=9, padding=4),
+            nn.Conv1d(self.hidden_dim, self.hidden_dim, kernel_size=9, dilation=4, padding=16),
+            nn.Conv1d(self.hidden_dim, self.hidden_dim, kernel_size=9, dilation=16, padding=64),
+            nn.Conv1d(self.hidden_dim, self.hidden_dim, kernel_size=9, dilation=64, padding=256),
+        ]
+        
+        # Replicate the base conv layers for num_cnn_stacks times
+        self.convs = nn.ModuleList([
+            copy.deepcopy(layer)
+            for layer in base_convs
+            for i in range(self.num_cnn_stacks)
+        ])
+        
+        # Time conditioning layers
+        self.time_layers = nn.ModuleList([
+            Dense(self.hidden_dim, self.hidden_dim) for _ in range(self.num_layers)
+        ])
+        
+        # Layer normalization
+        self.norms = nn.ModuleList([
+            nn.LayerNorm(self.hidden_dim) for _ in range(self.num_layers)
+        ])
+        
+        # Final output layers
+        self.final_conv = nn.Sequential(
+            nn.Conv1d(self.hidden_dim, self.hidden_dim, kernel_size=1),
+            nn.ReLU(),
+            nn.Conv1d(self.hidden_dim, self.S, kernel_size=1),  # Output to alphabet size
+        )
+        
+        # Dropout
+        self.dropout = nn.Dropout(self.p_dropout)
+
+    def display(self, msg: str) -> None:
+        """
+        Display message either as logging info or as print if no logger has been defined.
+        
+        Args:
+            msg (str): Message to be displayed.
+        """
+        if self.logger is None:
+            print(msg)
+        else:
+            self.logger.info(msg)
+
+    @property
+    def device(self) -> object:
+        """
+        Return the device the model parameters are on.
+        
+        Returns:
+            (object): The device the model parameters are on.
+        """
+        # Pick the first parameter and return on which device it is on
+        return next(self.parameters()).device
+    
+    @property
+    def num_parameters(self) -> int:
+        """
+        Return the number of model parameters.
+        
+        Return:
+            (int): Number of model parameters.
+        """
+        return sum(parameter.numel() for parameter in self.parameters() if parameter.requires_grad)
+
+    def encode_x(self, x: torch.tensor) -> torch.tensor:
+        """
+        One-hot encode the input tensor x.
+
+        Args:
+            x (torch.tensor): Torch tensor of shape (B, D) holding
+                'discrete states' entries, where B is the batch size
+                and D is the dimensionality of each batch point.
+
+        Return:
+            (torch.tensor): Tensor where the 'discrete states' entries 
+                (with cardinality S in each dimension) of x have been 
+                one-hot encoded to a tensor of shape (B, D, S)
+        """
+        return torch.nn.functional.one_hot(x.long(), num_classes=self.S).float()
+
+    def forward(self, 
+                xt: torch.tensor, 
+                t: torch.tensor) -> torch.tensor:
+        """
+        Define forward pass of the CNN denoising model.
+        
+        Args:
+            xt (torch.tensor): Shape (B, D) - noised input sequences.
+            t (torch.tensor): Shape (B,) - time steps.
+
+        Return:
+            (torch.tensor): Logits of shape (B, D, S).
+        """
+        # Extract the batch size
+        B = xt.shape[0]
+
+        # One-hot encode the input
+        if len(xt.shape) == 3:
+            # Assume already one-hot encoded
+            seq_encoded = xt  # (B, D, S)
+        else:
+            # Shape (B, D, S)
+            seq_encoded = F.one_hot(xt.long(), num_classes=self.S).float()
+        
+        # Time embedding
+        time_emb = F.relu(self.time_embedder(t))  # (B, hidden_dim)
+        
+        # Convert to conv1d format: (B, S, D)
+        feat = seq_encoded.permute(0, 2, 1)  # (B, S, D)
+        feat = F.relu(self.linear(feat))      # (B, hidden_dim, D)
+
+        # Pass through CNN layers with time conditioning
+        for i in range(self.num_layers):
+            h = self.dropout(feat.clone())
+            
+            # Add time conditioning
+            if self.stack_time:
+                time_cond = self.time_layers[i](time_emb)[:, :, None]  # (B, hidden_dim, 1)
+                h = h + time_cond  # Broadcast along sequence dimension
+            
+            # Layer normalization (need to transpose for LayerNorm)
+            h = self.norms[i](h.permute(0, 2, 1))  # (B, D, hidden_dim)
+            h = F.relu(self.convs[i](h.permute(0, 2, 1)))  # (B, hidden_dim, D)
+            
+            # Residual connection
+            if h.shape == feat.shape:
+                feat = h + feat
+            else:
+                feat = h
+
+        # Final convolution to get logits
+        feat = self.final_conv(feat)  # (B, S, D)
+        
+        # Convert back to (B, D, S) format to match expected output
+        logits = feat.permute(0, 2, 1)  # (B, D, S)
+        
+        return logits
+
+
+def activation_fn_factory(model_cfg: ml_collections.ConfigDict) -> object:
+    """
+    Factory that returns a torch activation function object
+    based on the passed input config dictionary.
+
+    Args:
+        model_cfg (ml_collections.ConfigDict): Model specific config
+            dictionary that should contain 'model_cfg.activation_fn'
+            as entry, which is used to construct the torch activation
+            function object.
+    Return:
+        (object): Torch activation function object.
+    """
+    # Use a ReLU activation function as default
+    if 'activation_fn' in model_cfg:
+        activation_fn_name = model_cfg.activation_fn.name
+        if 'params' in model_cfg.activation_fn:
+            activation_fn_params = model_cfg.activation_fn.params
+        else:
+            activation_fn_params = None
+    else:
+        # Use a ReLU activation function as default if 
+        # the activation function is not defined in the 
+        # model config
+        activation_fn_name = 'ReLU'
+        activation_fn_params = None
+
+    # Try to get a handle on the activation function
+    try:
+        activation_fn_handle = getattr(torch.nn, activation_fn_name)
+    except AttributeError:
+        err_msg = f"There is no activation function in torch.nn with name '{activation_fn_name}'."
+        raise ValueError(err_msg)
+    
+    # Initialize the activation function with parameters if specified
+    if activation_fn_params is None:
+        # Initialize without parameters
+        return activation_fn_handle()
+    else:
+        # Initialize with parameters
+        return activation_fn_handle(**activation_fn_params)
+
 # Define the denoising model
 class DenoisingModel(torch.nn.Module):
     def __init__(self, 

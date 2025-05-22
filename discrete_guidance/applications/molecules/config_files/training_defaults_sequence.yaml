@@ -101,7 +101,14 @@ data:
 # Configs for denoising model
 denoising_model:
     num_hidden: 2                   # Number of hidden layers
-    hidden_dim: 20000               # Dimension of each hidden layer
+    # hidden_dim: 20000               # Dimension of each hidden layer
+    # ========================================================================
+    # 추가사항
+    hidden_dim: 256
+    num_cnn_stacks: 2             # Number of CNN stacks
+    p_dropout: 0.1
+    # ========================================================================
+
     activation_fn:
         name: 'ReLU'                # Activation function. E.g. 'RELU', 'SELU', or 'ELU'
         params: null                # Parameters of the activation function. 'params' can be null (parsed as None), a dictionary (e.g., {'alpha': 1} for 'ELU'), or not specified in the configs.
@@ -178,14 +185,14 @@ training:
     denoising_model:
         optimizer: 'Adam'           # Optimizer to be used
         lr: 0.001                  # Learning rate to be used
-        num_epochs: 2             # Number of epochs to be trained for
+        num_epochs: 10            # Number of epochs to be trained for
         clip_grad: False             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
     reward_predictor_model:
         optimizer: 'Adam'           # Optimizer to be used
         lr: 0.0001                  # Learning rate to be used
-        num_epochs: 2            # Number of epochs to be trained for
+        num_epochs: 10               # Number of epochs to be trained for
         clip_grad: True             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
