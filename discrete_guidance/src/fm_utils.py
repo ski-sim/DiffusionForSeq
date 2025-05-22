@@ -34,8 +34,10 @@ def flow_matching_sampling(
     purity_temp: float = 1.0,
     num_unpadded_freq_dict: Optional[Dict[int, float]] = None,
     eps: float = 1e-9,
+    predictor:torch.nn.Module = None,
     dataset: Optional[List[torch.Tensor]] = None,
-    local_search: Optional[bool] = False,
+    ls_ratio: float = 1.0,
+    radius: float = 1.0,
 ):
     """
     Generates samples using flow matching with optional predictor or predictor-free guidance.
@@ -108,8 +110,10 @@ def flow_matching_sampling(
             purity_temp=purity_temp,
             num_unpadded_freq_dict=num_unpadded_freq_dict,
             eps=eps,
+            predictor=predictor,
             dataset=dataset,
-            local_search=local_search,  
+            ls_ratio=ls_ratio ,
+            radius=radius 
         )
         samples.append(x1)
         counter += batch_size
@@ -147,8 +151,10 @@ def flow_matching_sampling_masking_euler(
     purity_temp: float = 1.0,
     num_unpadded_freq_dict: Optional[Dict[int, float]] = None,
     eps: float = 1e-9,
+    predictor: torch.nn.Module = None,   
     dataset: Optional[List[torch.Tensor]] = None,
-    local_search: Optional[bool] = False,
+    ls_ratio: float = 0,
+    radius: float = 1.0,    
 ) -> np.ndarray:
     """
     Generates samples using Euler integration of the discrete flow matching model with optional guidance.
@@ -188,22 +194,35 @@ def flow_matching_sampling_masking_euler(
         mask_idx = S - 1
 
     B = batch_size
-
-    # Sample initial xt
-    if local_search:
-        seqs, scores = dataset.get_all_data(return_as_str=False)
-
-        scores = torch.tensor(scores, dtype=torch.float)
-        probs = F.softmax(scores, dim=0)
-        sampled_indices = torch.multinomial(probs, num_samples=B, replacement=False)
-        sampled_seqs = [seqs[i] for i in sampled_indices]
-        sample_action_prob = 0.3
-        mask = torch.rand(len(sampled_seqs)) > sample_action_prob
-        xt = torch.tensor(sampled_seqs, dtype=torch.long, device=device)
-        xt[mask] = mask_idx
+    n_local = int(B * ls_ratio)   # local_search 비율에 해당하는 개수 
+    n_random = B - n_local            
+    # local search sampling
+    seqs, scores = dataset.get_all_data(return_as_str=False)
+    # using proxy
+    t =  torch.ones(len(scores), dtype=torch.long).to(device)
+    batch_data_t = {}
+    if isinstance(seqs, np.ndarray):
+        x = torch.from_numpy(seqs).to(device)
     else:
-        xt = mask_idx * torch.ones((B, D), dtype=torch.long, device=device)
+        x = seqs
+    batch_data_t['x'] = x
+    proxy_scores = predictor(batch_data_t,t,is_x_onehot=False)
+    scores = torch.tensor(proxy_scores, dtype=torch.float)
+    
+    # using oracles
+    # scores = torch.tensor(scores, dtype=torch.float)
 
+    probs = F.softmax(scores, dim=0)
+    sampled_indices = torch.multinomial(probs, num_samples=n_local, replacement=False)
+    sampled_seqs = [seqs[i] for i in sampled_indices]
+    sample_action_prob = radius
+    mask = torch.rand(len(sampled_seqs)) > sample_action_prob
+    xt_local = torch.tensor(sampled_seqs, dtype=torch.long, device=device)
+    xt_local[mask] = mask_idx
+    # random sampling
+    xt_random = mask_idx * torch.ones((n_random, D), dtype=torch.long, device=device)
+
+    xt = torch.cat([xt_local, xt_random], dim=0)
     t = 0.0
     num_steps = int(1 / dt)  # TODO: Use ceil or int?
     mask_one_hot = torch.zeros((S,), device=device)

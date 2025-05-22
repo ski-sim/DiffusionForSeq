@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 # Only run as main
-def diffusion_sample(args, predictor, oracle, round, dataset,local_search):
+def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius):
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
     # parser.add_argument('-c', '--config',                     type=str, required=True, help='[Required] Path to (generation) config file.')
@@ -165,8 +165,9 @@ def diffusion_sample(args, predictor, oracle, round, dataset,local_search):
                                                 stochasticity=generation_cfg.sampler.noise,
                                                 dt=generation_cfg.sampler.dt,
                                                 batch_size=generation_cfg.sampler.batch_size,
+                                                predictor = predictor,
                                                 dataset=dataset,
-                                                local_search=local_search)
+                                                ls_ratio=ls_ratio)
         else:
             # Construct the predictor model name based on the property name
             predictor_model_name = f"{property_name}_predictor_model"
@@ -187,8 +188,10 @@ def diffusion_sample(args, predictor, oracle, round, dataset,local_search):
                                                 guide_temp=generation_cfg.sampler.guide_temp,
                                                 grad_approx=generation_cfg.sampler.grad_approx,
                                                 batch_size=generation_cfg.sampler.batch_size,
+                                                predictor = predictor,
                                                 dataset=dataset,
-                                                local_search=local_search)
+                                                ls_ratio=ls_ratio,
+                                                radius=radius)
 
          
         # for proxy evaluation

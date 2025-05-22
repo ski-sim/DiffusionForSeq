@@ -83,7 +83,7 @@ parser.add_argument("--gen_reward_min", default=0, type=float)
 parser.add_argument("--gen_L2", default=0, type=float)
 parser.add_argument("--gen_partition_init", default=50, type=float)
 parser.add_argument("--diffusion_generator", action="store_true", default=False)
-parser.add_argument("--local_search", action="store_true", default=True)
+parser.add_argument("--ls_ratio", default=0.5, type=float)
 
 # Soft-QLearning/GFlownet gen
 parser.add_argument("--gen_reward_exp_ramping", default=3, type=float)
@@ -706,8 +706,28 @@ def train(args, oracle, dataset):  # runner.run()
         print("+++++++++++++++++++predictor training done+++++++++++++")
         # diffusion 샘플링
         # batch, proxy_score = sample_batch(args, rollout_worker, generator, oracle, round=round, dataset=dataset)
+      
         
-        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset, local_search=args.local_search)
+        seqs, scores = dataset.get_all_data(return_as_str=False)
+        # using proxy
+        t =  torch.ones(len(scores), dtype=torch.long).to(args.device)
+        batch_data_t = {}
+        if isinstance(seqs, np.ndarray):
+            x = torch.from_numpy(seqs).to(args.device)
+        else:
+            x = seqs
+        batch_data_t['x'] = x
+        rs = predictor(batch_data_t,t,is_x_onehot=False)
+        sigma = rs.std(unbiased=False) 
+
+
+        radius = get_current_radius(iter=0, round=round, args=args, rs=rs, y=scores, sigma=sigma)
+        unique_vals = torch.unique(radius)
+        radius = unique_vals.item()
+        print("+++++++++++++++++++radius+++++++++++++")
+        print(radius)
+  
+        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
         args.logger.add_object("collected_seqs", batch[0])

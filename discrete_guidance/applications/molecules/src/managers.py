@@ -512,8 +512,10 @@ class DFMManager(object):
                  grad_approx:bool=False,
                  guide_temp:float=1.0, # Guidance temperature
                  batch_size:int=500,
+                 predictor:torch.nn.Module=None,
                  dataset: Optional[List[torch.Tensor]] = None,
-                 local_search:bool=True) -> torch.tensor:
+                 ls_ratio:float=1.0,
+                 radius:float=1.0) -> torch.tensor:
         """
         Generate x-samples.
 
@@ -617,8 +619,10 @@ class DFMManager(object):
                                                    # number of unpadded tokens in the training set:
                                                    num_unpadded_freq_dict=self.cfg.data.get('train_num_tokens_freq_dict', None),
                                                    eps = 1e-9,
+                                                   predictor=predictor,
                                                    dataset=dataset,
-                                                   local_search=local_search)   
+                                                   ls_ratio=ls_ratio,
+                                                   radius=radius)   
         else:
             self.display("Sample using discrete-framework (D3PM/DiGress).")
             self.display("Remark: The input arguments 'dt' and 'stochasticity' are not used in this framework.")
