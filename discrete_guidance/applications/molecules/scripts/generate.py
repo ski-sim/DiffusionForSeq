@@ -22,7 +22,8 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 # Only run as main
-def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius):
+def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,target_property_value):
+
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
     # parser.add_argument('-c', '--config',                     type=str, required=True, help='[Required] Path to (generation) config file.')
@@ -33,7 +34,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius):
     # args = defaultdict()
     args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
     args.num_valid_molecule_samples = 500
-    args.property_name_value = 'reward=1.0'
+    # args.property_name_value = 'reward=1.0'
     # 가장 최근이나 seed별로 원하는 모델을 유동적으로 지정할 수 있게 추후 수정
     # 이걸 넣으면 path가 꼬이네
     args.overrides = ''
@@ -54,14 +55,12 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius):
     generation_cfg.update(overrides)
 
     # Parse the property name and target property value
-    args.property_name_value = args.property_name_value.strip('"')
-    if args.property_name_value=='': # Default value if no property value was passed
-        property_name                   = 'None'
-        target_property_value           = None
-        run_folder_name_property_prefix = 'unconditional'
-    else: # Target property passed
-        # property_name = num_rings, target_property_value = 1
-        property_name, target_property_value = args.property_name_value.split('=')
+    # args.property_name_value = args.property_name_value.strip('"')
+    
+    if args.property_name_value=='reward': # Default value if no property value was passed
+        # property_name, target_property_value = args.property_name_value.split('=')
+        property_name = args.property_name_value 
+        target_property_value = target_property_value
         if target_property_value=='None':
             target_property_value = None
         else:
@@ -70,6 +69,10 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius):
                 target_property_value = int(target_property_value)
 
         run_folder_name_property_prefix = args.property_name_value
+    else:
+        property_name                   = 'None'
+        target_property_value           = None
+        run_folder_name_property_prefix = 'unconditional'
 
     # Extract the requested number of unique valid nswcs (uvnswcs) from the arguments
     num_uvnswcs_requested = int(args.num_valid_molecule_samples)
@@ -180,6 +183,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius):
 
             # 현재시각 20:48 여기까지 왔다.
             # Here we use generation cfg
+           
             x_generated = eval_manager.generate(num_samples=generation_cfg.sampler.batch_size, #500, 
                                                 seed=None, # Only use the external seed
                                                 stochasticity=generation_cfg.sampler.noise,

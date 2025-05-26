@@ -77,8 +77,8 @@ def diffusion_train(args, round, dataset):
     # sequence_data_path = preprocessing.get_file_path(which_file='preprocessed_dataset',
     #                           which_dataset=cfg.data.which_dataset,  
     #                           base_dir=cfg.base_dir)
-    print(cfg.base_dir)
-    print(cfg.data.which_dataset)
+    # print(cfg.base_dir)
+    # print(cfg.data.which_dataset)
     sequences = dataset.train
     scores = dataset.train_scores
     
