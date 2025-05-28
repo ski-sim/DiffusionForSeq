@@ -5,6 +5,7 @@ import itertools
 import time
 import wandb
 import matplotlib.pyplot as plt
+import os
 
 import pandas as pd
 import numpy as np
@@ -691,9 +692,21 @@ def train(args, oracle, dataset):  # runner.run()
     # predictor 훈련
     rst = None
     PERCENTILE = args.percentile
+    #* diffusion settings
+    # args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
+    # args.dif_model = 'denoising_model'
+    # args.prd_model = 'reward_predictor_model'
+    args.overrides = ''
+    args.overrides = args.overrides.strip('"')
+    # now = datetime.now().strftime("%m%d_%H%M%S")
+    if args.overrides == '':
+        args.run_folder_path = f'trained/{args.now}_{args.task}/no_overrides'
+    else:
+        args.run_folder_path = f'trained/{args.now}_{args.task}/{args.overrides}'
+    args.gen_folder_path = f'generated/{args.now}_{args.task}'
     # 올바른 데이터 참조는 round 횟수로 한다
-    for round in range(args.num_rounds):
-        args.logger.set_context(f"iter_{round+1}")
+    for round_idx in range(args.num_rounds):
+        args.logger.set_context(f"iter_{round_idx+1}")
         # diffusion 빌드, 대신 diffusion 구조는 CNN쓰도록 변경
         # generator = get_generator(args, tokenizer)
         # diffusion 훈련
@@ -703,10 +716,13 @@ def train(args, oracle, dataset):  # runner.run()
         # diffusion이 먼저 훈련하기 때문에, diffusion_train()에서 dataset(BioSeqDataset)을 받아서 
         # sequence_preprocessed_data.tsv위치에 저장한다. round를 인자로 줬으니, dataset을 iter로 
         # 구분할 수 있게 되면 좋겠지 
-        print(f"+++++++++++++++++++Iteration {round+1} starts+++++++++++++")
-        diffusion_train(args, round, dataset)
+        print(f"+++++++++++++++++++Iteration {round_idx+1} starts+++++++++++++")
+        args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
+        args.model = 'denoising_model'
+        diffusion_train(args, round_idx, dataset)
         print("+++++++++++++++++++diffusion training done+++++++++++++")
-        predictor = predictor_train(args, round, dataset).to(args.device)
+        args.model = 'reward_predictor_model'
+        predictor = predictor_train(args, round_idx, dataset).to(args.device)
         print("+++++++++++++++++++predictor training done+++++++++++++")
         # diffusion 샘플링
         # batch, proxy_score = sample_batch(args, rollout_worker, generator, oracle, round=round, dataset=dataset)
@@ -727,13 +743,15 @@ def train(args, oracle, dataset):  # runner.run()
         sigma = rs.std(unbiased=False) 
 
 
-        radius = get_current_radius(iter=0, round=round, args=args, rs=rs, y=scores, sigma=sigma)
+        radius = get_current_radius(iter=0, round=round_idx, args=args, rs=rs, y=scores, sigma=sigma)
         unique_vals = torch.unique(radius)
         radius = unique_vals.item()
         print("+++++++++++++++++++radius+++++++++++++")
         print('radius',radius,'percentile',PERCENTILE,'target_property_value',target_property_value)
-  
-        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
+
+        args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
+        args.num_valid_molecule_samples = 500
+        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
         args.logger.add_object("collected_seqs", batch[0])
@@ -744,7 +762,7 @@ def train(args, oracle, dataset):  # runner.run()
         new_seqs = ["".join([str(i) for i in x]) for x in batch[0]]
         # 축적된 dataset에 대한 performance, diversity등의 평가 진행
         # # 우리는 일단 스킵
-        rst = log_overall_metrics(args, dataset, round+1, new_batch=(new_seqs, batch[1], proxy_score), collected=True, rst=rst)
+        rst = log_overall_metrics(args, dataset, round_idx+1, new_batch=(new_seqs, batch[1], proxy_score), collected=True, rst=rst)
         # if round != args.num_rounds - 1:
         #     proxy.update(dataset)
         args.logger.save(args.save_path, args)
@@ -758,12 +776,13 @@ def main(args):
     args.device = torch.device('cuda')
     oracle = get_oracle(args)
     dataset = get_dataset(args, oracle)
+    args.now = datetime.now().strftime("%m%d_%H%M%S")
     # dataset.weighted_sample(10, 0.01)
     
     if args.use_wandb:
         proj = 'delta-cs'
         run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
-        wandb.run.name = args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
+        wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
     train(args, oracle, dataset)
     
     if args.use_wandb:
@@ -772,5 +791,6 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    os.makedirs("./results", exist_ok=True)
     assert args.radius_option in ['linear', 'adaptive_linear', 'adaptive', 'constant', 'none']
     main(args)

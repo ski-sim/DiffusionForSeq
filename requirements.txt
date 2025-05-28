@@ -5,3 +5,6 @@ sentencepiece==0.2.0
 sequence-models==1.2.0
 wandb
 tqdm
+ml_collections==0.1.1
+rdkit-pypi==2023.3.2
+chembl_structure_pipeline==1.2.2

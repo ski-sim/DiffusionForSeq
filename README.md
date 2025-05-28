@@ -40,8 +40,6 @@ conda install -c bioconda viennarna
 pip install -r requirements.txt
 ```
 
-
-
 ## Usage
 
 #### TF-Bind-8

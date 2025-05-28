@@ -32,15 +32,15 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     # parser.add_argument('-o', '--overrides',                  type=str, default='',    help='[Optional] Which configs (in the config file) to override (pass configuration names and override-values in the format "<config-name-1>=<config-value-1>|<config-name-2>=<config-value-2>"). If this argument is not passed, no configurations will be overriden.')
     # args = parser.parse_args()
     # args = defaultdict()
-    args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
-    args.num_valid_molecule_samples = 500
+    # args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
+    # args.num_valid_molecule_samples = 500
     # args.property_name_value = 'reward=1.0'
     # 가장 최근이나 seed별로 원하는 모델을 유동적으로 지정할 수 있게 추후 수정
     # 이걸 넣으면 path가 꼬이네
-    args.overrides = ''
+    # args.overrides = ''
     
     # Strip potenial '"' at beginning and end of args.overrides
-    args.overrides = args.overrides.strip('"')
+    # args.overrides = args.overrides.strip('"')
 
     # Load the configs from the passed path to the config file
     generation_cfg = config_handling.load_cfg_from_yaml_file(args.config)
@@ -53,6 +53,8 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
 
     # Update the configs with the overrides
     generation_cfg.update(overrides)
+    
+    generation_cfg.trained_run_folder_dir = f"./{args.run_folder_path}"
 
     # Parse the property name and target property value
     # args.property_name_value = args.property_name_value.strip('"')
@@ -80,13 +82,18 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
 
     # Create a folder for the current generation run
     # save_location = ./generated
-    save_location = str(Path(generation_cfg.base_dir, 'generated'))
+    # save_location = str(Path(generation_cfg.base_dir, 'generated'))
+    save_location = str(Path(generation_cfg.base_dir, args.gen_folder_path))
     # run_folder_name = num_rings1|n=1000
     run_folder_name = f"{run_folder_name_property_prefix}|n={num_uvnswcs_requested}"
     # 이건 path가 이상해져서 생략
     # if args.overrides!='':
     #     run_folder_name += f"|{args.overrides}"
+    save_location = str(Path(args.gen_folder_path, run_folder_name))
+    # outputs_dir = bookkeeping.create_run_folder(save_location, run_folder_name, include_time=False)
+
     outputs_dir = bookkeeping.create_run_folder(save_location, run_folder_name, include_time=False)
+
 
     # Define a logger
     log_file_path = str(Path(outputs_dir, 'logs'))

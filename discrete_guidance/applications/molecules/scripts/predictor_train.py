@@ -19,7 +19,7 @@ from collections import defaultdict
 # 훌륭한 weighted sampple을 그대로 쓸 수 있으니까 이 diffusion_train 메서드에서
 # dataLoader를 만들지 말고 dataset을 받아서 가공한다음 train_dataloader를 새로 만들어
 # 대신 형태변환은 해줘야지
-def predictor_train(args, round, dataset):
+def predictor_train(args, round_idx, dataset):
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
     # parser.add_argument('-c', '--config',    type=str, required=True, help='[Required] Path to (training) config file.')
@@ -28,9 +28,9 @@ def predictor_train(args, round, dataset):
     # args = parser.parse_args()
     # args = defaultdict()
     # args.config = './config_files/training_defaults_sequence.yaml'
-    args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
-    args.model = 'reward_predictor_model'
-    args.overrides = ''
+    # args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
+    # args.model = 'reward_predictor_model'
+    # args.overrides = ''
 
     # Load the configs from the passed path to the config file
     cfg = config_handling.load_cfg_from_yaml_file(args.config)
@@ -39,7 +39,7 @@ def predictor_train(args, round, dataset):
     original_cfg = copy.deepcopy(cfg)
 
     # Strip potenial '"' at beginning and end of args.overrides
-    args.overrides = args.overrides.strip('"')
+    # args.overrides = args.overrides.s trip('"')
 
     # Parse the overrides
     overrides = config_handling.parse_overrides(args.overrides)
@@ -48,14 +48,23 @@ def predictor_train(args, round, dataset):
     cfg.update(overrides)
 
     # Create a folder for the current training run
-    save_location = str(Path(cfg.base_dir, 'trained'))
-    if args.overrides=='':
-        print('No overrides specified. Using default folder name.')
-        run_folder_name = 'no_overrides'
+    if round_idx == 0:
+        save_location = str(Path(cfg.base_dir, args.run_folder_path))
+        outputs_dir = bookkeeping.create_run_folder(save_location, '', include_time=False)
     else:
-        run_folder_name = args.overrides
-    outputs_dir = bookkeeping.create_run_folder(save_location, run_folder_name, include_time=False)
+        save_location = str(Path(cfg.base_dir, args.run_folder_path))
+        outputs_dir = Path(save_location)
+
     config_handling.update_dirs_in_cfg(cfg, str(outputs_dir))
+
+    # save_location = str(Path(cfg.base_dir, 'trained'))
+    # if args.overrides=='':
+    #     print('No overrides specified. Using default folder name.')
+    #     run_folder_name = 'no_overrides'
+    # else:
+    #     run_folder_name = args.overrides
+    # outputs_dir = bookkeeping.create_run_folder(save_location, run_folder_name, include_time=False)
+    # config_handling.update_dirs_in_cfg(cfg, str(outputs_dir))
 
     # Define a logger
     log_file_path = str(Path(cfg.outputs_dir, 'logs'))

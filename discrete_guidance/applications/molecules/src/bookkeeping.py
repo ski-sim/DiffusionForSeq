@@ -27,13 +27,7 @@ def create_run_folder(save_location:str,
         (os.PathLike): Path to the generated run folder.
     
     """
-    today_date = datetime.today().strftime(r'%Y-%m-%d')
-    now_time = datetime.now().strftime(r'%H-%M-%S')
-    if include_time:
-        total_inner_folder_name = now_time + '_' + inner_folder_name
-    else:
-        total_inner_folder_name = inner_folder_name
-    path = Path(save_location).joinpath(today_date).joinpath(total_inner_folder_name)
+    path = Path(save_location)
     path.mkdir(parents=True, exist_ok=True)
 
     # Create the sub-folders within the run folder

@@ -9,7 +9,7 @@ base_dir: '.'
 # trained_run_folder_dir: './trained/CTFM'
 # 이걸 유동적으로 바꿔야겠는데, 예를 들어 trained 폴더에서 제일 latest한 dir를 참조하는 것처럼
 # trained_run_folder_dir: './trained/2025-04-29/no_overrides'
-trained_run_folder_dir: './trained/2025-05-22/no_overrides'
+trained_run_folder_dir: './trained/2025-05-27/no_overrides'
 # /home/son9ih/discrete_guidance/applications/molecules/trained/2025-02-09/no_overrides/models_saved
 
 # Specify the sampler specific configurations
@@ -27,5 +27,5 @@ sampler:
   grad_approx: False          # Use Taylor-approximated guidance (TAG) or not
   seed: 30                    # Seed to be used to initialize random states of generation
   # 규일
-  batch_size: 500             # How many samples to draw in parallel, generate 100 samples in parallel
+  batch_size: 501             # How many samples to draw in parallel, generate 100 samples in parallel
   max_iterations: 10099      # The maximal number of times the generator is invoked, 

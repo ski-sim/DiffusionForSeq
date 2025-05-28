@@ -25,7 +25,7 @@ from discrete_guidance.applications.molecules.src import preprocessing
 # dataLoader를 만들지 말고 dataset을 받아서 가공한다음 train_dataloader를 새로 만들어
 # 대신 형태변환은 해줘야지
 # dataset을 받아서 sequence_preprocessed_dataset을 새로 만드는 로직이 선행되야한다. 
-def diffusion_train(args, round, dataset):
+def diffusion_train(args, round_idx, dataset):
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
     # parser.add_argument('-c', '--config',    type=str, required=True, help='[Required] Path to (training) config file.')
@@ -33,10 +33,10 @@ def diffusion_train(args, round, dataset):
     # parser.add_argument('-o', '--overrides', type=str, default='',    help='[Optional] Which configs (in the config file) to override (pass configuration names and override-values in the format "<config-name-1>=<config-value-1>|<config-name-2>=<config-value-2>"). If this argument is not specified, no configurations will be overriden.')
     # args = parser.parse_args()
     # args = defaultdict() # 이러면 args가 중첩되지 못하는데?
-    args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
+    # args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
     # args.model = 'denoising_model'
-    args.model = 'denoising_model'
-    args.overrides = ''
+    # args.model = 'denoising_model'
+    # args.overrides = ''
 
     # Load the configs from the passed path to the config file
     cfg = config_handling.load_cfg_from_yaml_file(args.config)
@@ -45,7 +45,7 @@ def diffusion_train(args, round, dataset):
     original_cfg = copy.deepcopy(cfg)
 
     # Strip potenial '"' at beginning and end of args.overrides
-    args.overrides = args.overrides.strip('"')
+    # args.overrides = args.overrides.strip('"')
 
     # Parse the overrides
     overrides = config_handling.parse_overrides(args.overrides)
@@ -54,13 +54,14 @@ def diffusion_train(args, round, dataset):
     cfg.update(overrides)
 
     # Create a folder for the current training run
-    save_location = str(Path(cfg.base_dir, 'trained'))
-    if args.overrides=='':
-        print('No overrides specified. Using default folder name.')
-        run_folder_name = 'no_overrides'
+    if round_idx == 0:
+        save_location = str(Path(cfg.base_dir, args.run_folder_path))
+        outputs_dir = bookkeeping.create_run_folder(save_location, '', include_time=False)
     else:
-        run_folder_name = args.overrides
-    outputs_dir = bookkeeping.create_run_folder(save_location, run_folder_name, include_time=False)
+        # For rounds > 0, use the same directory structure as round 0
+        save_location = str(Path(cfg.base_dir, args.run_folder_path))
+        outputs_dir = Path(save_location)
+
     config_handling.update_dirs_in_cfg(cfg, str(outputs_dir))
 
     # Define a logger
