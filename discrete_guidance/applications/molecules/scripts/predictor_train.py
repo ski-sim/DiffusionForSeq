@@ -34,7 +34,7 @@ def predictor_train(args, round_idx, dataset):
 
     # Load the configs from the passed path to the config file
     cfg = config_handling.load_cfg_from_yaml_file(args.config)
-    if args.task in ['aav', 'gfp', 'tfbind', 'rna']:
+    if args.task in ['aav', 'gfp', 'tfbind', 'rna1', 'rna2', 'rna3']:
         cfg.data.preprocessing.over_ten_unique_tokens = True
     else:
         cfg.data.preprocessing.over_ten_unique_tokens = False

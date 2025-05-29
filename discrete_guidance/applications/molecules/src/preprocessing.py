@@ -59,8 +59,8 @@ def load_preprocessed_dataset(which_dataset:str,
     # file_path = get_file_path(which_file='preprocessed_dataset',
     #                           which_dataset=which_dataset,  
     #                           base_dir=base_dir)
-    
-    file_path = '../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv'
+    file_path = preprocessed_dataset_path
+    # file_path = '../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv'
     # if iteration == 1:
     #     # If the iteration is 1, then we do not need to add any suffix to the file name
     #     file_path = file_path.replace('.csv', f'_iter{iteration}.csv')

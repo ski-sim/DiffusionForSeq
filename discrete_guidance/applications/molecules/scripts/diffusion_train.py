@@ -84,7 +84,7 @@ def diffusion_train(args, round_idx, dataset):
     scores = dataset.train_scores
     
     csv_data = []
-    if args.task in ['aav', 'gfp', 'tfbind', 'rna']:#* preprocessed with ' ' separation.  predictor train에서도 고쳐줘야함.
+    if args.task in ['aav', 'gfp', 'tfbind', 'rna1', 'rna2', 'rna3']:#* preprocessed with ' ' separation.  predictor train에서도 고쳐줘야함.
         cfg.data.preprocessing.over_ten_unique_tokens = True
         for seq, score in zip(sequences, scores):
             sequence = ' '.join([str(i) for i in seq])
