@@ -732,13 +732,15 @@ def train(args, oracle, dataset):  # runner.run()
         target_property_value = np.quantile(scores, PERCENTILE)
         
         # using proxy
-        t =  torch.ones(len(scores), dtype=torch.long).to(args.device)
+        # t =  torch.ones(len(scores), dtype=torch.long).to(args.device)
+        t =  torch.zeros(len(scores), dtype=torch.long).to(args.device)
         batch_data_t = {}
         if isinstance(seqs, np.ndarray):
             x = torch.from_numpy(seqs).to(args.device)
         else:
             x = seqs
         batch_data_t['x'] = x
+
         rs = predictor(batch_data_t,t,is_x_onehot=False)
         sigma = rs.std(unbiased=False) 
 
