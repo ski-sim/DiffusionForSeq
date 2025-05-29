@@ -784,8 +784,15 @@ def main(args):
     if args.use_wandb:
         proj = 'delta-cs'
         run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
-        wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
+        # wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
+        wandb.run.name = args.now + "_" + args.task + "_" + "mr" + str(args.max_radius) + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff)
+ 
+        
     train(args, oracle, dataset)
+
+    if os.path.exists(args.preprocessed_dataset_path):
+        os.remove(args.preprocessed_dataset_path)
+        print(f"{args.preprocessed_dataset_path} is removed")
     
     if args.use_wandb:
         wandb.finish()
