@@ -42,8 +42,8 @@ class Orchestrator(object):
         if load_data:
             # Load the dataset // ./data/preprocessed/qmugs_preprocessed_dataset.tsv
             # 이 부분과 
-             
-            dataset_df = preprocessing.load_preprocessed_dataset(cfg.data.which_dataset, 
+            dataset_df = preprocessing.load_preprocessed_dataset(cfg.data.which_dataset,
+                                                                 cfg.data.preprocessed_dataset_path, 
                                                                  base_dir=cfg.base_dir, 
                                                                  logger=logger)# 여기서 오류 발생
            
@@ -121,6 +121,7 @@ class Orchestrator(object):
         # Define the model
         utils.set_random_seed(cfg.denoising_model.init_seed)
         # denoising_model = models.DenoisingModel(cfg, time_encoder=time_encoder, logger=logger)
+        #* CNN init
         denoising_model = models.DenoisingModel_CNN(cfg, time_encoder=time_encoder, logger=logger)
         # Define the optimizer
         if load_data:

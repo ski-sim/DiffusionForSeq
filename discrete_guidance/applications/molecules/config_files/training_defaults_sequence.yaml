@@ -198,25 +198,25 @@ training:
         clip_grad: True             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    waiting_time_predictor_model:
-        optimizer: 'Adam'           # Optimizer to be used
-        lr: 0.0001                  # Learning rate to be used
-        num_epochs: 50              # Number of epochs to be trained for
-        clip_grad: True             # Use gradient clipping?
-        warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
-        seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    logp_predictor_model:
-        optimizer: 'Adam'           # Optimizer to be used
-        lr: 0.0001                  # Learning rate to be used
-        num_epochs: 50              # Number of epochs to be trained for
-        clip_grad: True             # Use gradient clipping?
-        warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
-        seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    num_heavy_atoms_predictor_model:
-        optimizer: 'Adam'           # Optimizer to be used
-        lr: 0.0001                  # Learning rate to be used
-        num_epochs: 50              # Number of epochs to be trained for
-        clip_grad: True             # Use gradient clipping?
-        warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
-        seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
+    # waiting_time_predictor_model:
+    #     optimizer: 'Adam'           # Optimizer to be used
+    #     lr: 0.0001                  # Learning rate to be used
+    #     num_epochs: 50              # Number of epochs to be trained for
+    #     clip_grad: True             # Use gradient clipping?
+    #     warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
+    #     seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
+    # logp_predictor_model:
+    #     optimizer: 'Adam'           # Optimizer to be used
+    #     lr: 0.0001                  # Learning rate to be used
+    #     num_epochs: 50              # Number of epochs to be trained for
+    #     clip_grad: True             # Use gradient clipping?
+    #     warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
+    #     seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
+    # num_heavy_atoms_predictor_model:
+    #     optimizer: 'Adam'           # Optimizer to be used
+    #     lr: 0.0001                  # Learning rate to be used
+    #     num_epochs: 50              # Number of epochs to be trained for
+    #     clip_grad: True             # Use gradient clipping?
+    #     warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
+    #     seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
     

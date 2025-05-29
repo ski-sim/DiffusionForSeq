@@ -53,12 +53,19 @@ class MoleculesDataHandler(object):
         self.figs_save_dir               = figs_save_dir
         self.logger                      = logger
         
-        # Filter dataset_df
+        # Filter dataset_df #* score filtering & figure
         self.dataset_df = self.filter_dataset_df(dataset_df)
 
         # Determine the maximal number of tokens (over all nswcs)
         # need revision
-        self.max_num_tokens = max([len(sequence) for sequence in self.dataset_df['sequence']])
+        if cfg.over_ten_unique_tokens:
+            self.max_num_tokens = max([len(sequence.split(' ')) for sequence in self.dataset_df['sequence']])
+            length_list = [len(sequence.split(' ')) for sequence in self.dataset_df['sequence']]
+            if len(set(length_list)) != 1:
+                self.display(f"Warning: Sequences have different lengths. Found lengths: {set(length_list)}")
+        else:
+            self.max_num_tokens = max([len(sequence) for sequence in self.dataset_df['sequence']])
+        
         self.display(f"Maximum number of tokens (over all sequence): {self.max_num_tokens}")
         # self.max_num_tokens = max([len(nswcs) for nswcs in self.dataset_df['nswcs']])
         # self.display(f"Maximum number of tokens (over all nswcs): {self.max_num_tokens}")
@@ -67,12 +74,15 @@ class MoleculesDataHandler(object):
         unique_tokens_set = set()
         # for nswcs in self.dataset_df['nswcs']:
         for sequence in self.dataset_df['sequence']:
-            unique_tokens_set.update(set([token for token in sequence]))
+            if cfg.over_ten_unique_tokens:
+                unique_tokens_set.update(set(sequence.split(' ')))
+            else:
+                unique_tokens_set.update(set([token for token in sequence]))
 
         self.display(f"Unique tokens (#{len(unique_tokens_set)}): {unique_tokens_set}")
 
         # Initialize a smiles encoder (that can also be used for decoding)
-        # Do i have to make advance to SMILESEncoder?
+        # Do i have to make advance to SMILESEncoder? #* token마다 id 설정. mask token추가.
         self.smiles_encoder = SMILESEncoder(unique_tokens_set, 
                                             max_num_tokens=self.max_num_tokens)
         
@@ -185,7 +195,10 @@ class MoleculesDataHandler(object):
         """
         # Generate a list containing the number of tokens per nswcs in the train set
         # num_tokens_per_train_nswcs_list = [len(nswcs) for nswcs in self.subset_df_dict['train']['nswcs']]
-        num_tokens_per_train_nswcs_list = [len(sequence) for sequence in self.subset_df_dict['train']['sequence']]
+        if ' ' in self.subset_df_dict['train']['sequence'].iloc[0]: #* preprocessed with ' ' separation. 
+            num_tokens_per_train_nswcs_list = [len(sequence.split(' ')) for sequence in self.subset_df_dict['train']['sequence']]
+        else:
+            num_tokens_per_train_nswcs_list = [len(sequence) for sequence in self.subset_df_dict['train']['sequence']]
         
         # Count the number of occurances of a certain "number of tokens". 
         # Remark: collections.Counter will return a dict-like counter object with "number of tokens" 
@@ -610,15 +623,18 @@ class SMILESEncoder(object):
             (np.ndarray): Numerically encoded SMILES string.
         
         """
-        # Pad the SMILES string if necessary
-        if len(smiles)==self.max_num_tokens:
-            padded_smiles = smiles
-        elif len(smiles)<self.max_num_tokens:
-            padding = ''.join([self.pad_token]*(self.max_num_tokens-len(smiles)))
-            padded_smiles = smiles + padding
+        if ' ' in smiles:
+            padded_smiles = smiles.split(' ')
         else:
-            err_msg = f"Cannot encode SMILES strings longer than max_num_tokens={self.max_num_tokens}, but got the following SMILES with {len(smiles)} tokens: {smiles}"
-            raise ValueError(err_msg)
+            # Pad the SMILES string if necessary
+            if len(smiles)==self.max_num_tokens:
+                padded_smiles = smiles
+            elif len(smiles)<self.max_num_tokens:
+                padding = ''.join([self.pad_token]*(self.max_num_tokens-len(smiles)))
+                padded_smiles = smiles + padding
+            else:
+                err_msg = f"Cannot encode SMILES strings longer than max_num_tokens={self.max_num_tokens}, but got the following SMILES with {len(smiles)} tokens: {smiles}"
+                raise ValueError(err_msg)
         
         # Map padded smiles to numpy array
         return np.array([self.token_to_index_map[token] for token in padded_smiles])

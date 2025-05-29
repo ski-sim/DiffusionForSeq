@@ -34,6 +34,7 @@ _REL_FILE_PATH_DICT = {
 
 
 def load_preprocessed_dataset(which_dataset:str, 
+                              preprocessed_dataset_path:str, 
                               base_dir:str, 
                               iteration:int=0,
                               cond_value:int=0,
@@ -68,11 +69,12 @@ def load_preprocessed_dataset(which_dataset:str,
     # Either load or create (and save) the preprocessed dataset
     if os.path.isfile(file_path):
         # Preprocessed dataset does exist, thus load it
+        #* 여기서 read
         preprocessed_dataset_df = pd.read_csv(file_path, sep=',', dtype={"sequence": str})
         # Remove rows where waiting_time is -1.0 (failed simulations)
         preprocessed_dataset_df = preprocessed_dataset_df[preprocessed_dataset_df['reward'] != -1.0]
     
-        print('I read the preprocessed dataset')
+        # print('I read the preprocessed dataset')
         display_msg(logger, f"Loaded the '{which_dataset}' preprocessed dataset from: {file_path}")
     else:
         # Preprocessed dataset does not exist, thus create and save it

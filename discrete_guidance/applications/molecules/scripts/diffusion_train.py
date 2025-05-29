@@ -84,19 +84,32 @@ def diffusion_train(args, round_idx, dataset):
     scores = dataset.train_scores
     
     csv_data = []
-    
-    for seq, score in zip(sequences, scores):
-        # seq_str = ''.join([str(i) for i in seq])
-        sequence = "".join(map(str, seq))
-        csv_data.append([sequence, float(score)])
+    if args.task in ['aav', 'gfp', 'tfbind', 'rna']:#* preprocessed with ' ' separation.  predictor train에서도 고쳐줘야함.
+        cfg.data.preprocessing.over_ten_unique_tokens = True
+        for seq, score in zip(sequences, scores):
+            sequence = ' '.join([str(i) for i in seq])
+            csv_data.append([sequence, float(score)])
+    else:
+        cfg.data.preprocessing.over_ten_unique_tokens = False
+        for seq, score in zip(sequences, scores):
+            sequence = "".join(map(str, seq))
+            csv_data.append([sequence, float(score)])
+
+
+    # for seq, score in zip(sequences, scores):
+    #     if args.task == 'aav':
+    #         sequence = ' '.join([str(i) for i in seq])
+    #     else:
+    #         sequence = "".join(map(str, seq))
+    #     csv_data.append([sequence, float(score)])
         # seq_str = ''.join(map(str,[str(i) for i in seq]))
         # csv_data.append({'sequence': seq_str, 'reward': float(score)})
         
         
     # df = pd.DataFrame(csv_data)
 
-    sequence_data_path ='../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset.csv'
-    
+    sequence_data_path =f'../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset_{args.task}_{args.now}.csv'
+    args.preprocessed_dataset_path = sequence_data_path
     # df.to_csv(sequence_data_path, sep='\t', index=False)
     with open(sequence_data_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f, delimiter=",")
@@ -108,12 +121,13 @@ def diffusion_train(args, round_idx, dataset):
     
     # Generate orchestrator from cfg
     # Remark: This will update cfg
- 
+    cfg.data.preprocessed_dataset_path = sequence_data_path
     orchestrator = factory.Orchestrator(cfg, logger=logger)
    
     # Log the configs
     # What we care is here
-    logger.info(f"Overriden config: {cfg}")
+    if round_idx == 0:
+        logger.info(f"Overriden config: {cfg}")
   
     # Save the cfg, original_cfg, and overrides as yaml files in cfg.config_dir
     file_path = str(Path(cfg.configs_dir, 'original_config.yaml'))

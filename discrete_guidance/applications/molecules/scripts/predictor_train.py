@@ -34,6 +34,10 @@ def predictor_train(args, round_idx, dataset):
 
     # Load the configs from the passed path to the config file
     cfg = config_handling.load_cfg_from_yaml_file(args.config)
+    if args.task in ['aav', 'gfp', 'tfbind', 'rna']:
+        cfg.data.preprocessing.over_ten_unique_tokens = True
+    else:
+        cfg.data.preprocessing.over_ten_unique_tokens = False
 
     # Deepcopy the original cfg
     original_cfg = copy.deepcopy(cfg)
@@ -78,6 +82,7 @@ def predictor_train(args, round_idx, dataset):
 
     # Generate orchestrator from cfg
     # Remark: This will update cfg
+    cfg.data.preprocessed_dataset_path = args.preprocessed_dataset_path
     orchestrator = factory.Orchestrator(cfg, logger=logger)
 
     # Log the configs
