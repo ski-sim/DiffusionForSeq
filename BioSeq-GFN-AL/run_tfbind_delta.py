@@ -53,7 +53,7 @@ parser.add_argument("--seed", default=0, type=int)
 parser.add_argument("--run", default=-1, type=int)
 parser.add_argument("--noise_params", action="store_true")
 parser.add_argument("--enable_tensorboard", action="store_true")
-parser.add_argument("--use_wandb", action="store_true")
+parser.add_argument("--use_wandb", action="store_true", default=True)
 parser.add_argument("--save_proxy_weights", action="store_true")
 parser.add_argument("--use_uncertainty", action="store_true")
 parser.add_argument("--filter", action="store_true")
@@ -85,6 +85,8 @@ parser.add_argument("--gen_L2", default=0, type=float)
 parser.add_argument("--gen_partition_init", default=50, type=float)
 parser.add_argument("--diffusion_generator", action="store_true", default=False)
 parser.add_argument("--ls_ratio", default=0.5, type=float)
+
+parser.add_argument("--guide_temp", default=0.5, type=float)
 
 # Soft-QLearning/GFlownet gen
 parser.add_argument("--gen_reward_exp_ramping", default=3, type=float)
@@ -784,8 +786,15 @@ def main(args):
     if args.use_wandb:
         proj = 'delta-cs'
         run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
+
+        if wandb.run.sweep_id is not None:
+            args.max_radius = wandb.config.max_radius
+            args.sigma_coeff = wandb.config.sigma_coeff
+            args.percentile = wandb.config.percentile
+            args.percentile_coeff = wandb.config.percentile_coeff
+            args.min_radius = wandb.config.min_radius
         # wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
-        wandb.run.name = args.now + "_" + args.task + "_" + "mr" + str(args.max_radius) + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff)
+        wandb.run.name = args.now + "_" + args.task + "_" + "maxr" + str(args.max_radius) + "_" + "minr" + str(args.min_radius) + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp)
  
         
     train(args, oracle, dataset)

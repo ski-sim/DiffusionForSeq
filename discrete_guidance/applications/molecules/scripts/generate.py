@@ -44,6 +44,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
 
     # Load the configs from the passed path to the config file
     generation_cfg = config_handling.load_cfg_from_yaml_file(args.config)
+    generation_cfg.sampler.guide_temp = args.guide_temp #* argument로 받은 guidetemp로 삽입입
 
     # Deepcopy the original cfg
     original_generation_cfg = copy.deepcopy(generation_cfg)
