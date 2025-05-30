@@ -57,7 +57,7 @@ parser.add_argument("--enable_tensorboard", action="store_true")
 parser.add_argument("--use_wandb", action="store_true", default=True)
 parser.add_argument("--save_proxy_weights", action="store_true")
 parser.add_argument("--use_uncertainty", action="store_true")
-parser.add_argument("--filter", action="store_true")
+parser.add_argument("--filter", action="store_true", default=True)
 parser.add_argument("--kappa", default=0.1, type=float)
 parser.add_argument("--acq_fn", default="none", type=str)
 parser.add_argument("--load_proxy_weights", type=str)
@@ -129,15 +129,16 @@ parser.add_argument("--proxy_pos_ratio", default=0.9, type=float)
 parser.add_argument("--property_name_value", default='reward')
 
 #* 
-parser.add_argument("--guide_temp", default=0.5, type=float)
-
 parser.add_argument("--max_radius", default=0.5, type=float) #* for L >= 50, use 0.05
+
+parser.add_argument("--K", default=25, type=int)
+parser.add_argument("--gen_batch_size", default=16, type=int)
+
+parser.add_argument("--guide_temp", default=0.5, type=float)
 parser.add_argument("--percentile", default=2, type=float)
 parser.add_argument("--percentile_coeff", default=2, type=float)
 parser.add_argument("--sigma_coeff", default=5, type=float)
 
-parser.add_argument("--K", default=25, type=int)
-parser.add_argument("--gen_batch_size", default=16, type=int)
 
 
 
@@ -786,7 +787,7 @@ def main(args):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
-    
+
     args.logger = get_logger(args)
     args.device = torch.device('cuda')
     oracle = get_oracle(args)
@@ -805,7 +806,7 @@ def main(args):
             args.percentile_coeff = wandb.config.percentile_coeff
             args.min_radius = wandb.config.min_radius
         # wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
-        wandb.run.name = args.now + "_" + args.task + "_" + "maxr" + str(args.max_radius) + "_" + "minr" + str(args.min_radius) + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp)
+        wandb.run.name = args.now + "_" + args.task + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp) + "_" + "K" + str(args.K) + "_" + "gb" + str(args.gen_batch_size)
  
         
     train(args, oracle, dataset)
