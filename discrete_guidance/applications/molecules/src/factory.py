@@ -119,7 +119,7 @@ class Orchestrator(object):
         ################################################################################
         ## Denoising model
         # Define the model
-        utils.set_random_seed(cfg.denoising_model.init_seed)
+        # utils.set_random_seed(cfg.denoising_model.init_seed) #* delta cs main에서 seed init.
         # denoising_model = models.DenoisingModel(cfg, time_encoder=time_encoder, logger=logger)
         #* CNN init
         denoising_model = models.DenoisingModel_CNN(cfg, time_encoder=time_encoder, logger=logger)

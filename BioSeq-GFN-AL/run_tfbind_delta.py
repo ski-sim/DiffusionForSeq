@@ -6,6 +6,7 @@ import time
 import wandb
 import matplotlib.pyplot as plt
 import os
+import random
 
 import pandas as pd
 import numpy as np
@@ -86,7 +87,6 @@ parser.add_argument("--gen_partition_init", default=50, type=float)
 parser.add_argument("--diffusion_generator", action="store_true", default=False)
 parser.add_argument("--ls_ratio", default=0.5, type=float)
 
-parser.add_argument("--guide_temp", default=0.5, type=float)
 
 # Soft-QLearning/GFlownet gen
 parser.add_argument("--gen_reward_exp_ramping", default=3, type=float)
@@ -106,10 +106,8 @@ parser.add_argument("--gen_model_type", default="mlp")
 
 parser.add_argument("--radius_option", default='none', type=str)
 parser.add_argument("--min_radius", default=0.5, type=float)
-parser.add_argument("--max_radius", default=0.5, type=float)
-parser.add_argument("--K", default=25, type=int)
 
-parser.add_argument("--sigma_coeff", default=5, type=float)
+
 parser.add_argument("--rank_coeff", default=0.01, type=float)
 
 # Proxy
@@ -129,8 +127,19 @@ parser.add_argument("--proxy_num_dropout_samples", default=25, type=int)
 parser.add_argument("--proxy_pos_ratio", default=0.9, type=float)
 
 parser.add_argument("--property_name_value", default='reward')
+
+#* 
+parser.add_argument("--guide_temp", default=0.5, type=float)
+
+parser.add_argument("--max_radius", default=0.5, type=float) #* for L >= 50, use 0.05
 parser.add_argument("--percentile", default=2, type=float)
 parser.add_argument("--percentile_coeff", default=2, type=float)
+parser.add_argument("--sigma_coeff", default=5, type=float)
+
+parser.add_argument("--K", default=25, type=int)
+parser.add_argument("--gen_batch_size", default=16, type=int)
+
+
 
 class MbStack:
     def __init__(self, f):
@@ -776,6 +785,8 @@ def train(args, oracle, dataset):  # runner.run()
 def main(args):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+    random.seed(args.seed)
+    
     args.logger = get_logger(args)
     args.device = torch.device('cuda')
     oracle = get_oracle(args)
