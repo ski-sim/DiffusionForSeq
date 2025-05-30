@@ -54,10 +54,10 @@ parser.add_argument("--seed", default=0, type=int)
 parser.add_argument("--run", default=-1, type=int)
 parser.add_argument("--noise_params", action="store_true")
 parser.add_argument("--enable_tensorboard", action="store_true")
-parser.add_argument("--use_wandb", action="store_true", default=True)
+parser.add_argument("--use_wandb", action="store_true")
 parser.add_argument("--save_proxy_weights", action="store_true")
 parser.add_argument("--use_uncertainty", action="store_true")
-parser.add_argument("--filter", action="store_true", default=True)
+parser.add_argument("--filter", action="store_true")
 parser.add_argument("--kappa", default=0.1, type=float)
 parser.add_argument("--acq_fn", default="none", type=str)
 parser.add_argument("--load_proxy_weights", type=str)
@@ -821,6 +821,8 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if args.task in ['aav', 'gfp']: #* for L >= 50, use 0.05
+        args.max_radius = 0.05
     os.makedirs("./results", exist_ok=True)
     assert args.radius_option in ['linear', 'adaptive_linear', 'adaptive', 'constant', 'none']
     main(args)
