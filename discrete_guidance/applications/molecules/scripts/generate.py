@@ -46,6 +46,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     generation_cfg = config_handling.load_cfg_from_yaml_file(args.config)
     generation_cfg.sampler.batch_size = args.gen_batch_size #* argument로 받은 guidetemp로 삽입입
     generation_cfg.sampler.guide_temp = args.guide_temp #* argument로 받은 guidetemp로 삽입입
+    generation_cfg.seed = args.seed
 
     # Deepcopy the original cfg
     original_generation_cfg = copy.deepcopy(generation_cfg)
@@ -161,7 +162,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     tensorboard_writer = bookkeeping.setup_tensorboard(generation_cfg.outputs_dir, rank=0)
 
     # Set a random seed
-    utils.set_random_seed(generation_cfg.sampler.seed)
+    utils.set_random_seed(generation_cfg.seed)
 
     # Generate until a certain number of unique valid nswcs (uvnswcs) has been sampled 
     sampled_uvnswcs_list = list() # Keep track of the sampled unique valid nswcs (uvnswcs)
