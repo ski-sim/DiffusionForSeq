@@ -38,7 +38,7 @@ data:
         random_seed_split: 42                         # Random seed of the validation-train split
         filter_order: ['reward']     # Order of molecular properties used during filtering (in-memory preprocessing)
         filter_range_dict:                                          # Range of number of rings that molecules require to be included in the dataset
-            reward:       [-2000, 2000]                                            # Range of LogP (i.e., lipophilicity) values that molecules require to be included in the dataset
+            reward:       [0, 1.5]                                            # Range of LogP (i.e., lipophilicity) values that molecules require to be included in the dataset
         # Specifications for creation of train sets used to train the 
         # property-predictor models that are subsampled from total 
         # (unconditional, i.e. 'denoising') train set.
@@ -49,39 +49,7 @@ data:
                 stratify: False                                             # Should subsampling be stratified w.r.t. the property?
                 use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
                 seed: 100                                                   # Seed for subsampling
-            # waiting_time:
-            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-            #     # stratify, use_max_num_bins
-            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-            #     # datahandling.py
-            #     use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
-            #     seed: 100                                                   # Seed for subsampling
-            # num_rings:
-            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-            #     use_max_num_bins: True                                      # Use maximal number of bins for stratification based on property-value binning?
-            #     seed: 100                                                   # Seed for subsampling
-            # logp:
-            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-            #     use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
-            #     seed: 101                                                   # Seed for subsampling
-            # num_heavy_atoms:
-            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-            #     use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
-            #     seed: 102                                                   # Seed for subsampling
-
-                # logp:
-            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-            #     use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
-            #     seed: 101                                                   # Seed for subsampling
-            # num_heavy_atoms:
-            #     fraction: 1.0                                               # Which fraction of the total ('denoising') train set to subsample. If fraction=1.0: No subsampling and property-specific train set is equivalent to total (unconditional, i.e. 'denoising') train set.
-            #     stratify: False                                             # Should subsampling be stratified w.r.t. the property?
-            #     use_max_num_bins: False                                     # Use maximal number of bins for stratification based on property-value binning?
-            #     seed: 102                                                   # Seed for subsampling
+                                            # Seed for subsampling
 
     dataloaders:
         train:
@@ -131,54 +99,6 @@ reward_predictor_model:
     init_seed: 43                   # Model weights initialization seed
     stack_time: False               # Stack time and spatial features as model input (i.e., for learnable function f(s) use s=[x, t] if stack_time=True and s=x if stack_time=False)
 
-num_rings_predictor_model:
-    y_guide_name: 'num_rings'       # Name of the property
-    hidden_dims: [1000]             # Dimensions of all hidden layers (i.e. [1000] is one hidden layer with dimension 1000)
-    activation_fn:
-        name: 'ReLU'                # Activation function. E.g. 'RELU', 'SELU', or 'ELU'
-        params: null                # Parameters of the activation function. 'params' can be null (parsed as None), a dictionary (e.g., {'alpha': 1} for 'ELU'), or not specified in the configs.
-    p_dropout: 0.1                  # Dropout probability
-    eps: 1e-10                      # Epsilon to be used for numerical stability. Will be parsed as string!
-    init_seed: 43                   # Model weights initialization seed
-    type: 'normal'                  # Which type of likelihood to be used. Options are: 'categorical', 'ordinal', and 'noraml' (for 'continuous' y-values). (Default if not specified: 'normal')
-    stack_time: False       
-
-    # Configs for number of rings predictor model
-waiting_time_predictor_model:
-    y_guide_name: 'waiting_time'       # Name of the property
-    hidden_dims: [1000]             # Dimensions of all hidden layers (i.e. [1000] is one hidden layer with dimension 1000)
-    activation_fn:
-        name: 'ReLU'                # Activation function. E.g. 'RELU', 'SELU', or 'ELU'
-        params: null                # Parameters of the activation function. 'params' can be null (parsed as None), a dictionary (e.g., {'alpha': 1} for 'ELU'), or not specified in the configs.
-    p_dropout: 0.1                  # Dropout probability
-    eps: 1e-10                      # Epsilon to be used for numerical stability. Will be parsed as string!
-    init_seed: 43                   # Model weights initialization seed
-    type: 'normal'                  # Which type of likelihood to be used. Options are: 'categorical', 'ordinal', and 'noraml' (for 'continuous' y-values). (Default if not specified: 'normal')
-    stack_time: False               # Stack time and spatial features as model input (i.e., for learnable function f(s) use s=[x, t] if stack_time=True and s=x if stack_time=False)
-
-# Configs for logp (i.e., lipophilicity) predictor model
-logp_predictor_model:
-    y_guide_name: 'logp'            # Name of the property
-    hidden_dims: [1000]             # Dimensions of all hidden layers (i.e. [1000] is one hidden layer with dimension 1000)
-    activation_fn:
-        name: 'ReLU'                # Activation function. E.g. 'RELU', 'SELU', or 'ELU'
-        params: null                # Parameters of the activation function. 'params' can be null (parsed as None), a dictionary (e.g., {'alpha': 1} for 'ELU'), or not specified in the configs.
-    p_dropout: 0.1                  # Dropout probability
-    eps: 1e-10                      # Epsilon to be used for numerical stability. Will be parsed as string!
-    init_seed: 43                   # Model weights initialization seed
-    stack_time: False               # Stack time and spatial features as model input (i.e., for learnable function f(s) use s=[x, t] if stack_time=True and s=x if stack_time=False)
-
-# Configs for number of heavy atoms predictor model
-num_heavy_atoms_predictor_model:
-    y_guide_name: 'num_heavy_atoms' # Name of the property
-    hidden_dims: [1000]             # Dimensions of all hidden layers (i.e. [1000] is one hidden layer with dimension 1000)
-    activation_fn:
-        name: 'ReLU'                # Activation function. E.g. 'RELU', 'SELU', or 'ELU'
-        params: null                # Parameters of the activation function. 'params' can be null (parsed as None), a dictionary (e.g., {'alpha': 1} for 'ELU'), or not specified in the configs.
-    p_dropout: 0.1                  # Dropout probability
-    eps: 1e-10                      # Epsilon to be used for numerical stability. Will be parsed as string!
-    init_seed: 43                   # Model weights initialization seed
-    stack_time: False               # Stack time and spatial features as model input (i.e., for learnable function f(s) use s=[x, t] if stack_time=True and s=x if stack_time=False)
 
 # Configs for training setup (specified individually for each of the models)
 training:
@@ -186,7 +106,7 @@ training:
         optimizer: 'Adam'           # Optimizer to be used
         lr: 0.001                  # Learning rate to be used
         # num_epochs: 100
-        num_epochs: 50           # Number of epochs to be trained for
+        num_epochs: 100           # Number of epochs to be trained for
         clip_grad: False             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
@@ -194,29 +114,7 @@ training:
         optimizer: 'Adam'           # Optimizer to be used
         lr: 0.0001                  # Learning rate to be used
         # num_epochs: 50
-        num_epochs: 25               # Number of epochs to be trained for
+        num_epochs: 50               # Number of epochs to be trained for
         clip_grad: True             # Use gradient clipping?
         warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
         seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    # waiting_time_predictor_model:
-    #     optimizer: 'Adam'           # Optimizer to be used
-    #     lr: 0.0001                  # Learning rate to be used
-    #     num_epochs: 50              # Number of epochs to be trained for
-    #     clip_grad: True             # Use gradient clipping?
-    #     warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
-    #     seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    # logp_predictor_model:
-    #     optimizer: 'Adam'           # Optimizer to be used
-    #     lr: 0.0001                  # Learning rate to be used
-    #     num_epochs: 50              # Number of epochs to be trained for
-    #     clip_grad: True             # Use gradient clipping?
-    #     warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
-    #     seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    # num_heavy_atoms_predictor_model:
-    #     optimizer: 'Adam'           # Optimizer to be used
-    #     lr: 0.0001                  # Learning rate to be used
-    #     num_epochs: 50              # Number of epochs to be trained for
-    #     clip_grad: True             # Use gradient clipping?
-    #     warmup: 0                   # Specify learning rate warmup. Remark: Learning rate warmup is only used when specified 'warmup' is bigger than 0.
-    #     seed: 42                    # Random state seed for training (that has an impact on the order of batches during training)
-    
