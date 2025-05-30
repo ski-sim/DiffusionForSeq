@@ -81,8 +81,9 @@ def diffusion_train(args, round_idx, dataset):
     #                           base_dir=cfg.base_dir)
     # print(cfg.base_dir)
     # print(cfg.data.which_dataset)
-    sequences = dataset.train
-    scores = dataset.train_scores
+    sequences, scores = dataset.get_all_data(return_as_str=False)
+    # sequences = dataset.train
+    # scores = dataset.train_scores
     
     csv_data = []
     if args.task in ['aav', 'gfp', 'tfbind', 'rna1', 'rna2', 'rna3']:#* preprocessed with ' ' separation.  predictor train에서도 고쳐줘야함.
