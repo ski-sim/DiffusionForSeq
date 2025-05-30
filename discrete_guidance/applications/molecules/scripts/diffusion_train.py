@@ -41,6 +41,8 @@ def diffusion_train(args, round_idx, dataset):
     # Load the configs from the passed path to the config file
     cfg = config_handling.load_cfg_from_yaml_file(args.config)
     cfg.seed = args.seed
+    cfg.training.denoising_model.num_epochs = args.denoising_model_epoch
+    cfg.training.reward_predictor_model.num_epochs = args.predictor_model_epoch
 
     # Deepcopy the original cfg
     original_cfg = copy.deepcopy(cfg)

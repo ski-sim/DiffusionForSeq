@@ -129,6 +129,9 @@ parser.add_argument("--proxy_pos_ratio", default=0.9, type=float)
 parser.add_argument("--property_name_value", default='reward')
 
 #* 
+parser.add_argument("--denoising_model_epoch", default=100, type=int)
+parser.add_argument("--predictor_model_epoch", default=50, type=int)
+
 parser.add_argument("--max_radius", default=0.5, type=float) #* for L >= 50, use 0.05
 
 parser.add_argument("--K", default=25, type=int)
