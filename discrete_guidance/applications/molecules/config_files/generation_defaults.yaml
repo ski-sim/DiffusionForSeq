@@ -27,5 +27,5 @@ sampler:
   grad_approx: False          # Use Taylor-approximated guidance (TAG) or not
   seed: 30                    # Seed to be used to initialize random states of generation
   # 규일
-  batch_size: 501             # How many samples to draw in parallel, generate 100 samples in parallel
+  batch_size: 16             # How many samples to draw in parallel, generate 100 samples in parallel
   max_iterations: 10099      # The maximal number of times the generator is invoked, 
