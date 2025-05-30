@@ -211,17 +211,39 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
         # Analyze the generated x
         # filtering here?
         
-        # generated sample들을 decoding? 그럴 필요 없는데
-        # 원소의 기호를 index숫자로 바꿔서 diffusion으로 넣어준 것이고, 이게 잘 됬다면 그냥 포함시켜도 상관없을듯
+        # Decode the generated x to smiles (int->smiles)
         generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(smiles_encoded)) for smiles_encoded in x_generated]
 
         generated_df_list.extend(generated_smiles_list)
         
-        if len(generated_df_list) > num_uvnswcs_requested:
-            generated_df_list = generated_df_list[:num_uvnswcs_requested]
+        # if len(generated_df_list) > num_uvnswcs_requested  :
+        if not args.filter:
+            args.K = 1
+        if len(generated_df_list) >= num_uvnswcs_requested * args.K :
+            if  not args.filter:
+                generated_df_list = generated_df_list[:num_uvnswcs_requested]
+            else:
+                total_x = np.vstack(total_x_generated)[:num_uvnswcs_requested * args.K, :]
+                batch_data_t = {}
+                if isinstance(total_x, np.ndarray):
+                    x = torch.from_numpy(total_x).to(args.device)
+                else:
+                    x = total_x
+                batch_data_t['x'] = x
+                t =  torch.ones(len(total_x), dtype=torch.long).to(args.device)
+                vals_proxy = predictor(batch_data_t, t ,is_x_onehot=False)
+                vals_proxy = vals_proxy.detach().cpu().numpy()
+                total_x = total_x[np.argsort(vals_proxy)[-num_uvnswcs_requested:], :]
+                generated_df_list = list()
+                for x in total_x:
+                    generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(x))]
+                    generated_df_list.extend(generated_smiles_list)
             break
-    # stack generated samples , shape (500, 8)
-    total_x  = np.vstack(total_x_generated)[:num_uvnswcs_requested, :]
+        
+    # # stack generated samples , shape (500, 8)
+    if not args.filter:
+        total_x  = np.vstack(total_x_generated)[:num_uvnswcs_requested, :]
+    
     # evaluate the generated samples by oracle
     total_x = total_x.astype(int)
     vals = oracle(total_x).reshape(-1)
@@ -235,6 +257,11 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     t =  torch.ones(len(vals), dtype=torch.long).to(args.device)
     proxy_scores = predictor(batch_data_t,t,is_x_onehot=False)
     proxy_scores = proxy_scores.detach().cpu().numpy()
+    
+    # total_X를 다시 generated_df_list로 바꿈
+    
+    
+    
         # filtering duplicated or invalid smiles
     #     analysis_dict = utils.analyze_generated_smiles(generated_smiles_list, 
     #                                                    orchestrator.molecules_data_handler.subset_df_dict['train']['nswcs'],
