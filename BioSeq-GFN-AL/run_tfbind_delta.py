@@ -770,7 +770,7 @@ def train(args, oracle, dataset):  # runner.run()
         # if round != args.num_rounds - 1:
         #     proxy.update(dataset)
         args.logger.save(args.save_path, args)
-        PERCENTILE =  min(1.2, args.percentile_coeff*PERCENTILE)
+        PERCENTILE =  min(1, args.percentile_coeff*PERCENTILE)
 
 # our base directory is '/home/son9ih/delta_cs/discrete_guidance/applications/molecules'
 def main(args):
