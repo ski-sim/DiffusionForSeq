@@ -34,6 +34,7 @@ def predictor_train(args, round_idx, dataset):
 
     # Load the configs from the passed path to the config file
     cfg = config_handling.load_cfg_from_yaml_file(args.config)
+    cfg.seed = args.seed
     if args.task in ['aav', 'gfp', 'tfbind', 'rna1', 'rna2', 'rna3']:
         cfg.data.preprocessing.over_ten_unique_tokens = True
     else:
@@ -139,7 +140,7 @@ def predictor_train(args, round_idx, dataset):
                                    which_model=model_name, 
                                    num_epochs=cfg.training[model_name].num_epochs,
                                    validation_dataloader=orchestrator.dataloader_dict['validation'], 
-                                   random_seed=cfg.training[model_name].seed,
+                                   random_seed=cfg.seed,
                                    plot_training_curves=cfg.make_figs,
                                    figs_save_dir=cfg.figs_save_dir,
                                    tensorboard_writer=tensorboard_writer,

@@ -119,7 +119,7 @@ class Orchestrator(object):
         ################################################################################
         ## Denoising model
         # Define the model
-        # utils.set_random_seed(cfg.denoising_model.init_seed) #* delta cs main에서 seed init.
+        utils.set_random_seed(cfg.seed) #* delta cs main에서 seed init.
         # denoising_model = models.DenoisingModel(cfg, time_encoder=time_encoder, logger=logger)
         #* CNN init
         denoising_model = models.DenoisingModel_CNN(cfg, time_encoder=time_encoder, logger=logger)
@@ -216,7 +216,7 @@ class Orchestrator(object):
         ## waiting_time predictor model
         # Define the model
         # 이걸 reward_predictor_model로 바꿔야함
-        utils.set_random_seed(cfg.reward_predictor_model.init_seed)
+        utils.set_random_seed(cfg.seed)
         # 여기까지 됐고
         reward_predictor_model = models.NormalPredictorGuideModel(model_cfg=cfg.reward_predictor_model, 
                                                                 general_cfg=cfg, 
