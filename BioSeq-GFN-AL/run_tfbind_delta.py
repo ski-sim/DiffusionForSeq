@@ -754,7 +754,7 @@ def train(args, oracle, dataset):  # runner.run()
         print('radius',radius,'percentile',PERCENTILE,'target_property_value',target_property_value)
 
         args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
-        args.num_valid_molecule_samples = 500
+        args.num_valid_molecule_samples = 128
         batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
@@ -770,7 +770,7 @@ def train(args, oracle, dataset):  # runner.run()
         # if round != args.num_rounds - 1:
         #     proxy.update(dataset)
         args.logger.save(args.save_path, args)
-        PERCENTILE =  min(1.0, args.percentile_coeff*PERCENTILE)
+        PERCENTILE =  min(1.2, args.percentile_coeff*PERCENTILE)
 
 # our base directory is '/home/son9ih/delta_cs/discrete_guidance/applications/molecules'
 def main(args):
