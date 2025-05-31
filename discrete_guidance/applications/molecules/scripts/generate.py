@@ -242,6 +242,14 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
                     generated_df_list.extend(generated_smiles_list)
             break
         
+    seen_seqs = set()
+    for seq in total_x_generated:
+        for x in seq:
+            x_tuple = tuple(x.flatten())
+            seen_seqs.add(x_tuple)
+    total_x_uniqueness = len(seen_seqs) / (num_uvnswcs_requested * args.K)
+    args.total_x_uniqueness = total_x_uniqueness
+
     # # stack generated samples , shape (500, 8)
     if not args.filter:
         total_x  = np.vstack(total_x_generated)[:num_uvnswcs_requested, :]

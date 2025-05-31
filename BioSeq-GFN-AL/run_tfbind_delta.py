@@ -643,19 +643,42 @@ def get_all_support(args, dataset, proxy, t=0):
     return (x_all, y_all), (x_holdout, y_holdout), (neighbor_seqs, neighbor_scores), (holdout_neighbor_seqs, holdout_neighbor_scores)
 
 def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=None):
+    '''
+    top-128 : dataset에서 top 128개의 score mean
+    dist-128 : dataset에서 top 128개의 평균 pairwise distance
+    nov-128 : dataset에서 top 128개와 초기 dataset과의 pairwise distance
+    max : dataset에서 top 128개에서 max score
+    median : dataset에서 top 128개에서 median score
+
+    queried는 새로운 batch에 대한 것
+    queried_score : new batch의 score mean
+    queried_dist : new batch의 평균 pairwise distance
+    queried_corrlation : new batch의 oracle score와 proxy score의 spearman correlation (score가 아닌,rank based로 계산함.)
+
+    collected는 초기 dataset에서 추가된 data를 뜻함.
+    collected_top-128 : collected에서 top 128개의 score mean
+    collected_max : collected에서 top 128개에서 max score
+    collected_50pl : collected에서 top 128개에서 median score
+    collected_dist-128 : collected에서 top 128개의 평균 pairwise distance
+    collected_novelty-128 : collected에서 top 128개와 초기 dataset과의 pairwise distance
+
+    total_sampled_uniqueness : 총 sampling한 seq에서 uniqueness계산산
+    '''
     top100 = dataset.top_k(128)
     args.logger.add_scalar("top-128-scores", np.mean(top100[1]), use_context=False)
     dist100 = mean_pairwise_distances(args, top100[0])
     args.logger.add_scalar("top-128-dists", dist100, use_context=False)
     args.logger.add_object("top-128-seqs", top100[0])
     queried_dist = mean_pairwise_distances(args, new_batch[0])
-    
+    dataset_uniqueness = len(set(dataset.get_all_data()[0])) / len(dataset.get_all_data()[0])
+
     queried_corrlation = spearman_correlation(new_batch[1], new_batch[2])
-    
+
+    queried_uniqueness = len(set(new_batch[0])) / len(new_batch[0])
     if args.task not in ['gfp', 'aav']:
-        ref_seqs, _ = dataset.get_ref_data()
+        ref_seqs, _ = dataset.get_ref_data()  #* ref data는 초기 dataset전체.
         novelty100 = mean_novelty(top100[0], ref_seqs)
-    else:
+    else: #* 아마 seq 길이가 길고 voca가 커서 오래걸리기에 이렇게 둔듯.
         novelty100 = 0
     print("========== Round {} ==========".format(round))
     print("Scores, 128", np.mean(top100[1]))
@@ -670,12 +693,15 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
            'queried_score': np.mean(new_batch[1]),
            'queried_dist': queried_dist,
            'queried_correlation': queried_corrlation,
+           'queried_uniqueness': queried_uniqueness,
+           'total_sampled_uniqueness': args.total_x_uniqueness,
+           'dataset_uniqueness': dataset_uniqueness,
            'round': round}
     if rst is None:
         rst = pd.DataFrame({'round': round, 'sequence': top100[0], 'true_score': top100[1]})
     else:
         rst = rst.append(pd.DataFrame({'round': round, 'sequence': top100[0], 'true_score': top100[1]}))
-    if collected:
+    if collected: #* collected는 초기 dataset에서 추가된 data를 뜻함.
         top100 = dataset.top_k_collected(128)
         args.logger.add_scalar("top-128-collected-scores", np.mean(top100[1]), use_context=False)
         args.logger.add_scalar("max-128-collected-scores", np.max(top100[1]), use_context=False)
@@ -693,6 +719,7 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
         log["collected_50pl"] = np.percentile(top100[1], 50)
         log["collected_dist-128"] = dist100
         log["collected_novelty-128"] = novelty100
+
     
     if args.use_wandb:
         wandb.log(log)
