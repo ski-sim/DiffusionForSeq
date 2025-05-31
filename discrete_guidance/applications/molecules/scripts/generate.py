@@ -47,6 +47,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     generation_cfg.sampler.batch_size = args.gen_batch_size #* argument로 받은 guidetemp로 삽입입
     generation_cfg.sampler.guide_temp = args.guide_temp #* argument로 받은 guidetemp로 삽입입
     generation_cfg.seed = args.seed
+    generation_cfg.sampler.x1_temp = args.diffusion_temp
 
     # Deepcopy the original cfg
     original_generation_cfg = copy.deepcopy(generation_cfg)

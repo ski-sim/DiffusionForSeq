@@ -141,6 +141,7 @@ parser.add_argument("--guide_temp", default=0.5, type=float)
 parser.add_argument("--percentile", default=2, type=float)
 parser.add_argument("--percentile_coeff", default=2, type=float)
 parser.add_argument("--sigma_coeff", default=5, type=float)
+parser.add_argument("--diffusion_temp", default=1, type=float)
 
 
 
@@ -696,6 +697,7 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
            'queried_uniqueness': queried_uniqueness,
            'total_sampled_uniqueness': args.total_x_uniqueness,
            'dataset_uniqueness': dataset_uniqueness,
+           'radius': args.log_radius,
            'round': round}
     if rst is None:
         rst = pd.DataFrame({'round': round, 'sequence': top100[0], 'true_score': top100[1]})
@@ -790,6 +792,7 @@ def train(args, oracle, dataset):  # runner.run()
         radius = get_current_radius(iter=0, round=round_idx, args=args, rs=rs, y=scores, sigma=sigma)
         unique_vals = torch.unique(radius)
         radius = unique_vals.item()
+        args.log_radius = radius
         print("+++++++++++++++++++radius+++++++++++++")
         print('radius',radius,'percentile',PERCENTILE,'target_property_value',target_property_value)
 

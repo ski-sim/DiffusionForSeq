@@ -216,7 +216,7 @@ def flow_matching_sampling_masking_euler(
     sampled_indices = torch.multinomial(probs, num_samples=n_local, replacement=False)
     sampled_seqs = [seqs[i] for i in sampled_indices]
     sample_action_prob = radius
-    mask = torch.rand(len(sampled_seqs)) > sample_action_prob
+    mask = torch.rand(len(sampled_seqs)) > sample_action_prob #* radius가 높으면, true가 더 적음. 즉, masking이 덜 일어남.
     xt_local = torch.tensor(sampled_seqs, dtype=torch.long, device=device)
     xt_local[mask] = mask_idx
     # random sampling
