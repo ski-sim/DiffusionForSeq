@@ -846,9 +846,9 @@ def main(args):
     
     if args.use_wandb:
         proj = 'delta-cs'
-        # run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
+        run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
         #for test
-        run = wandb.init(project=proj, group='test', config=args, reinit=True)
+        # run = wandb.init(project=proj, group='test', config=args, reinit=True)
 
         if wandb.run.sweep_id is not None:
             args.max_radius = wandb.config.max_radius
