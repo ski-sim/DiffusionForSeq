@@ -143,6 +143,15 @@ parser.add_argument("--percentile_coeff", default=2, type=float)
 parser.add_argument("--sigma_coeff", default=5, type=float)
 parser.add_argument("--diffusion_temp", default=1, type=float)
 
+parser.add_argument("--additional_reward", default=0, type=float)
+parser.add_argument("--max_reward", default=1.1, type=float)
+
+parser.add_argument("--various_guide_temp", action="store_true")
+parser.add_argument("--guide_temp_min", default=0.1, type=float)
+parser.add_argument("--guide_temp_max", default=0.5, type=float)
+
+#for debugging
+parser.add_argument("--num_valid_molecule_samples", default=128, type=int)
 
 
 
@@ -666,6 +675,7 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
     total_sampled_uniqueness : 총 sampling한 seq에서 uniqueness계산산
     '''
     top100 = dataset.top_k(128)
+    top_128_unique = len(set(top100[0])) / len(top100[0])
     args.logger.add_scalar("top-128-scores", np.mean(top100[1]), use_context=False)
     dist100 = mean_pairwise_distances(args, top100[0])
     args.logger.add_scalar("top-128-dists", dist100, use_context=False)
@@ -698,6 +708,7 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
            'total_sampled_uniqueness': args.total_x_uniqueness,
            'dataset_uniqueness': dataset_uniqueness,
            'radius': args.log_radius,
+           'top_128_uniqueness': top_128_unique,
            'round': round}
     if rst is None:
         rst = pd.DataFrame({'round': round, 'sequence': top100[0], 'true_score': top100[1]})
@@ -774,6 +785,10 @@ def train(args, oracle, dataset):  # runner.run()
         
         seqs, scores = dataset.get_all_data(return_as_str=False)
         target_property_value = np.quantile(scores, PERCENTILE)
+        if args.additional_reward != 0:
+            target_property_value += args.additional_reward
+            if target_property_value > args.max_reward:
+                target_property_value = args.max_reward
         
         # using proxy
         # t =  torch.ones(len(scores), dtype=torch.long).to(args.device)
@@ -797,7 +812,8 @@ def train(args, oracle, dataset):  # runner.run()
         print('radius',radius,'percentile',PERCENTILE,'target_property_value',target_property_value)
 
         args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
-        args.num_valid_molecule_samples = 128
+        # args.num_valid_molecule_samples = 128 
+        # args.num_valid_molecule_samples = 32 #for debugging 
         batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
@@ -830,7 +846,9 @@ def main(args):
     
     if args.use_wandb:
         proj = 'delta-cs'
-        run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
+        # run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
+        #for test
+        run = wandb.init(project=proj, group='test', config=args, reinit=True)
 
         if wandb.run.sweep_id is not None:
             args.max_radius = wandb.config.max_radius
@@ -839,7 +857,8 @@ def main(args):
             args.percentile_coeff = wandb.config.percentile_coeff
             args.min_radius = wandb.config.min_radius
         # wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
-        wandb.run.name = args.now + "_" + args.task + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp) + "_" + "K" + str(args.K) + "_" + "gb" + str(args.gen_batch_size)
+        wandb.run.name = args.now + "_" + args.task + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp) + "_" + "dt" + str(args.diffusion_temp) + "_" + "K" + str(args.K) + "_" + "gb" + str(args.gen_batch_size) + "_" + "a" + str(args.additional_reward) + "_" + "max" + str(args.guide_temp_max)
+        
  
         
     train(args, oracle, dataset)
@@ -854,6 +873,11 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if args.various_guide_temp:
+        if args.gen_batch_size <= 128:
+            args.additive_guide_temp = (args.guide_temp_max - args.guide_temp_min) / ((128 / args.gen_batch_size) * args.K -1)
+        else:
+            args.additive_guide_temp = (args.guide_temp_max - args.guide_temp_min) / (args.K -1)
     if args.task in ['aav', 'gfp']: #* for L >= 50, use 0.05
         args.max_radius = 0.05
     os.makedirs("./results", exist_ok=True)

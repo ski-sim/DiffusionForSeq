@@ -172,6 +172,9 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     logger.info(f"Will generate sequences are at least {num_uvnswcs_requested} sequences have been sampled.")
     total_x_generated = []
     for iteration in range(generation_cfg.sampler.max_iterations):
+        if args.additive_guide_temp:
+            generation_cfg.sampler.guide_temp = args.guide_temp_min + iteration * args.additive_guide_temp
+            print(f"generation_cfg.sampler.guide_temp: {generation_cfg.sampler.guide_temp}")
         # If no property is specified, use unconditional sampling
         if target_property_value is None:
             x_generated = eval_manager.generate(num_samples=generation_cfg.sampler.batch_size, 
@@ -248,7 +251,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
         for x in seq:
             x_tuple = tuple(x.flatten())
             seen_seqs.add(x_tuple)
-    total_x_uniqueness = len(seen_seqs) / (num_uvnswcs_requested * args.K)
+    total_x_uniqueness = len(seen_seqs) / (128 * args.K) #* gen batch size가 128보다 작으면 128에 맞게 추가로 돌아감.
     args.total_x_uniqueness = total_x_uniqueness
 
     # # stack generated samples , shape (500, 8)
