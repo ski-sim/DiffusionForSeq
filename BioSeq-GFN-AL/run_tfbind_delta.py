@@ -4,7 +4,6 @@ import pickle
 import itertools
 import time
 import wandb
-import matplotlib.pyplot as plt
 import os
 import random
 
@@ -30,6 +29,8 @@ from discrete_guidance.applications.molecules.scripts.diffusion_train import dif
 from discrete_guidance.applications.molecules.scripts.predictor_train import predictor_train
 from discrete_guidance.applications.molecules.scripts.generate import diffusion_sample
 
+from utils import  initialize_config, setup_directories, preprocess_dataset, save_configs
+from discrete_guidance.applications.molecules.src import factory
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--save_path", default='results/test_mlp.pkl.gz')
@@ -137,21 +138,11 @@ parser.add_argument("--max_radius", default=0.5, type=float) #* for L >= 50, use
 parser.add_argument("--K", default=25, type=int)
 parser.add_argument("--gen_batch_size", default=16, type=int)
 
-parser.add_argument("--guide_temp", default=1.0, type=float)
-parser.add_argument("--percentile", default=0.7, type=float)
-parser.add_argument("--percentile_coeff", default=1.1, type=float)
+parser.add_argument("--guide_temp", default=0.5, type=float)
+parser.add_argument("--percentile", default=2, type=float)
+parser.add_argument("--percentile_coeff", default=2, type=float)
 parser.add_argument("--sigma_coeff", default=5, type=float)
-parser.add_argument("--diffusion_temp", default=1, type=float)
 
-parser.add_argument("--additional_reward", default=0, type=float)
-parser.add_argument("--max_reward", default=1.1, type=float)
-
-parser.add_argument("--various_guide_temp", action="store_true")
-parser.add_argument("--guide_temp_min", default=1.0, type=float)
-parser.add_argument("--guide_temp_max", default=1.0, type=float)
-
-#for debugging
-parser.add_argument("--num_valid_molecule_samples", default=128, type=int)
 
 
 
@@ -675,7 +666,6 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
     total_sampled_uniqueness : 총 sampling한 seq에서 uniqueness계산산
     '''
     top100 = dataset.top_k(128)
-    top_128_unique = len(set(top100[0])) / len(top100[0])
     args.logger.add_scalar("top-128-scores", np.mean(top100[1]), use_context=False)
     dist100 = mean_pairwise_distances(args, top100[0])
     args.logger.add_scalar("top-128-dists", dist100, use_context=False)
@@ -707,8 +697,6 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
            'queried_uniqueness': queried_uniqueness,
            'total_sampled_uniqueness': args.total_x_uniqueness,
            'dataset_uniqueness': dataset_uniqueness,
-           'radius': args.log_radius,
-           'top_128_uniqueness': top_128_unique,
            'round': round}
     if rst is None:
         rst = pd.DataFrame({'round': round, 'sequence': top100[0], 'true_score': top100[1]})
@@ -739,6 +727,8 @@ def log_overall_metrics(args, dataset, round, new_batch, collected=False, rst=No
 
     return rst
 
+
+
 # 코드를 연결하는 과정에서 객체를 쓰지말고 특정 directory에 저장하기
 def train(args, oracle, dataset):  # runner.run()
     tokenizer = get_tokenizer(args)
@@ -759,6 +749,9 @@ def train(args, oracle, dataset):  # runner.run()
     else:
         args.run_folder_path = f'trained/{args.now}_{args.task}/{args.overrides}'
     args.gen_folder_path = f'generated/{args.now}_{args.task}'
+
+    sequence_data_path =f'../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset_{args.task}_{args.now}.csv'
+    args.preprocessed_dataset_path = sequence_data_path
     # 올바른 데이터 참조는 round 횟수로 한다
     for round_idx in range(args.num_rounds):
         args.logger.set_context(f"iter_{round_idx+1}")
@@ -773,10 +766,39 @@ def train(args, oracle, dataset):  # runner.run()
         # 구분할 수 있게 되면 좋겠지 
         print(f"+++++++++++++++++++Iteration {round_idx+1} starts+++++++++++++")
         args.config = '../discrete_guidance/applications/molecules/config_files/training_defaults_sequence.yaml'
-        args.model = 'denoising_model'
-        diffusion_train(args, round_idx, dataset)
-        print("+++++++++++++++++++diffusion training done+++++++++++++")
+        # args.model = 'denoising_model'
+        # denoising_model = diffusion_train(args, round_idx, dataset)
+        # print("+++++++++++++++++++diffusion training done+++++++++++++")
         args.model = 'reward_predictor_model'
+
+        ##############
+        # 1. 설정 초기화
+        cfg, original_cfg, overrides = initialize_config(args, round_idx)
+        
+        # 2. 디렉토리 설정
+        outputs_dir, logger = setup_directories(cfg, args, round_idx)
+        
+        # 3. 데이터 전처리
+        sequence_data_path, score_mean, score_std = preprocess_dataset(args, dataset, cfg)
+        
+        # 4. 설정 업데이트
+        cfg.data.reward_mean = score_mean
+        cfg.data.reward_std = score_std
+        cfg.training.denoising_model.p_uncond = 0.1
+        cfg.data.preprocessed_dataset_path = sequence_data_path
+        
+        # 5. Orchestrator 생성
+        orchestrator = factory.Orchestrator(cfg, logger=logger)
+        
+        # 6. 로깅 및 설정 저장
+        if round_idx == 0:
+            logger.info(f"Overriden config: {cfg}")
+        
+        save_configs(cfg, original_cfg, overrides)
+        
+        # 7. TensorBoard 설정
+        
+        #############
         predictor = predictor_train(args, round_idx, dataset).to(args.device)
         print("+++++++++++++++++++predictor training done+++++++++++++")
         # diffusion 샘플링
@@ -785,10 +807,6 @@ def train(args, oracle, dataset):  # runner.run()
         
         seqs, scores = dataset.get_all_data(return_as_str=False)
         target_property_value = np.quantile(scores, PERCENTILE)
-        if args.additional_reward != 0:
-            target_property_value += args.additional_reward
-            if target_property_value > args.max_reward:
-                target_property_value = args.max_reward
         
         # using proxy
         # t =  torch.ones(len(scores), dtype=torch.long).to(args.device)
@@ -807,14 +825,32 @@ def train(args, oracle, dataset):  # runner.run()
         radius = get_current_radius(iter=0, round=round_idx, args=args, rs=rs, y=scores, sigma=sigma)
         unique_vals = torch.unique(radius)
         radius = unique_vals.item()
-        args.log_radius = radius
         print("+++++++++++++++++++radius+++++++++++++")
         print('radius',radius,'percentile',PERCENTILE,'target_property_value',target_property_value)
-
+        if round_idx == 0:
+            args.model = 'denoising_model'
+            denoising_model = diffusion_train(args, round_idx, dataset, cfg, orchestrator, logger)
+            
+            print("+++++++++++++++++++diffusion training done+++++++++++++")
+        else:
+            i=0
+            while i<2:
+                args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
+                args.num_valid_molecule_samples = 2000
+                batch_off, proxy_score = diffusion_sample(args,denoising_model, predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
+                print("+++++++++++++++++++off-policy sampling done+++++++++++++")
+                args.model = 'denoising_model'
+                
+                temp_denoising_model = diffusion_train(args, round_idx, dataset, cfg, orchestrator, logger,batch_off)
+                
+                print("+++++++++++++++++++off-policy training done+++++++++++++")
+                
+                i+=1
+            denoising_model = temp_denoising_model
+     
         args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
-        # args.num_valid_molecule_samples = 128 
-        # args.num_valid_molecule_samples = 32 #for debugging 
-        batch, proxy_score = diffusion_sample(args,predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
+        args.num_valid_molecule_samples = 128
+        batch, proxy_score = diffusion_sample(args,denoising_model, predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
         print("+++++++++++++++++++diffusion sampling done+++++++++++++")
         # 이건 뭐지?
         args.logger.add_object("collected_seqs", batch[0])
@@ -847,8 +883,6 @@ def main(args):
     if args.use_wandb:
         proj = 'delta-cs'
         run = wandb.init(project=proj, group=args.task, config=args, reinit=True)
-        #for test
-        # run = wandb.init(project=proj, group='test', config=args, reinit=True)
 
         if wandb.run.sweep_id is not None:
             args.max_radius = wandb.config.max_radius
@@ -857,8 +891,7 @@ def main(args):
             args.percentile_coeff = wandb.config.percentile_coeff
             args.min_radius = wandb.config.min_radius
         # wandb.run.name = args.now + "_" + args.task + "_" + args.name + "_" + str(args.seed) + "_" + str(args.percentile)  + "_" + str(args.percentile_coeff)
-        wandb.run.name = args.now + "_" + args.task + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp) + "_" + "dt" + str(args.diffusion_temp) + "_" + "K" + str(args.K) + "_" + "gb" + str(args.gen_batch_size) + "_" + "a" + str(args.additional_reward) + "_" + "max" + str(args.guide_temp_max)
-        
+        wandb.run.name = args.now + "_" + args.task + "_" + "sc" + str(args.sigma_coeff) + "_" + "p" + str(args.percentile) + "_" + "pc" + str(args.percentile_coeff) + "_" + "gt" + str(args.guide_temp) + "_" + "K" + str(args.K) + "_" + "gb" + str(args.gen_batch_size)
  
         
     train(args, oracle, dataset)
@@ -873,11 +906,6 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    if args.various_guide_temp:
-        if args.gen_batch_size <= 128:
-            args.additive_guide_temp = (args.guide_temp_max - args.guide_temp_min) / ((128 / args.gen_batch_size) * args.K -1)
-        else:
-            args.additive_guide_temp = (args.guide_temp_max - args.guide_temp_min) / (args.K -1)
     if args.task in ['aav', 'gfp']: #* for L >= 50, use 0.05
         args.max_radius = 0.05
     os.makedirs("./results", exist_ok=True)

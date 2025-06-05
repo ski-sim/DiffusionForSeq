@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 # Only run as main
-def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,target_property_value):
+def diffusion_sample(args, denoising_model, predictor, oracle, round, dataset, ls_ratio, radius,target_property_value):
 
     # Parse arguments
     # parser = argparse.ArgumentParser(description='Train a model.')
@@ -47,7 +47,7 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     generation_cfg.sampler.batch_size = args.gen_batch_size #* argument로 받은 guidetemp로 삽입입
     generation_cfg.sampler.guide_temp = args.guide_temp #* argument로 받은 guidetemp로 삽입입
     generation_cfg.seed = args.seed
-    generation_cfg.sampler.x1_temp = args.diffusion_temp
+    # generation_cfg.sampler.x1_temp = args.diffusion_temp
     
     sequences, scores = dataset.get_all_data(return_as_str=False)
     score_mean = np.mean(scores)
@@ -206,10 +206,12 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     
     
     for iteration in range(generation_cfg.sampler.max_iterations):
-        # 너무 짜치는데?
-        if args.additive_guide_temp:
-            generation_cfg.sampler.guide_temp = min(args.guide_temp_min + iteration * args.additive_guide_temp, 2.0)
-            print(f"generation_cfg.sampler.guide_temp: {generation_cfg.sampler.guide_temp}")
+        # if args.various_guide_temp:
+        #     generation_cfg.sampler.guide_temp = args.guide_temp_min + iteration * args.additive_guide_temp
+        #     print(f"generation_cfg.sampler.guide_temp: {generation_cfg.sampler.guide_temp}")
+        # if args.additive_guide_temp:
+        #     generation_cfg.sampler.guide_temp = min(args.guide_temp_min + iteration * args.additive_guide_temp, 2.0)
+
         # If no property is specified, use unconditional sampling
         if target_property_value is None:
             x_generated = eval_manager.generate(num_samples=generation_cfg.sampler.batch_size, 
@@ -242,10 +244,12 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
                                                 grad_approx=generation_cfg.sampler.grad_approx,
                                                 batch_size=generation_cfg.sampler.batch_size,
                                                 predictor = predictor,
+                                                denoising_model = denoising_model,
                                                 dataset=dataset,
                                                 ls_ratio=ls_ratio,
                                                 radius=radius,
                                                 target_reward=target_property_value)
+            
 
          
         # for proxy evaluation
@@ -360,8 +364,8 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
             total_x = np.vstack(valid_total_x)
     
     # print(f"total_x {total_x}")
-    for x in total_x:
-        print(f"x {x}")
+    # for x in total_x:
+        # print(f"x {x}")
     # evaluate the generated samples by oracle
     total_x = total_x.astype(int)
     vals = oracle(total_x).reshape(-1)

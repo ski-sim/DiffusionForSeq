@@ -188,7 +188,35 @@ class BioSeqDataset(Dataset):
         self.valid_scores = np.concatenate((self.valid_scores, val), axis=0).reshape(-1)
         self.train = np.concatenate((self.train, train_seq), axis=0)
         self.valid = np.concatenate((self.valid, val_seq), axis=0)
-    
+        
+    # Add a batch of training data to the dataset
+    def add_train(self, batch):
+        samples, scores = batch
+        train = []
+        train_seq = []
+        for x, score in zip(samples, scores):
+            
+            train_seq.append(x)
+            train.append(score)
+        self.train_scores = np.concatenate((self.train_scores, train), axis=0).reshape(-1)
+        self.train = np.concatenate((self.train, train_seq), axis=0)
+
+    # change the dataset to a weighted sampling dataset
+    def resample_dataset_with_weighted_sample(self, n, rank_coefficient=0.01, test_size=0.1):
+        samples, scores = self.weighted_sample(n, rank_coefficient)
+
+        x_train, x_val, y_train, y_val = train_test_split(
+            samples, scores, test_size=test_size, random_state=self.rng
+        )
+
+        self.train = np.array(x_train)
+        self.valid = np.array(x_val)
+        self.train_scores = np.array(y_train).reshape(-1)
+        self.valid_scores = np.array(y_val).reshape(-1)
+        self.train_added = len(self.train)
+        self.val_added = len(self.valid)
+
+
     def _tostr(self, seqs):
         if self.task in ['gfp', 'aav']:
             return ["".join([self.oracle.itos[i] for i in x]) for x in seqs]

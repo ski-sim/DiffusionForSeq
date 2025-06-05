@@ -204,6 +204,7 @@ class DFMManager(object):
         # Save the model
         torch.save(self.models_dict[which_model].state_dict(), file_path)
         self.display(f"Saved '{which_model}' in: {file_path}")
+        return self.models_dict[which_model]
 
     def load_model(self, 
                    which_model, 
@@ -246,6 +247,7 @@ class DFMManager(object):
         # If the file path exists, load the model
         self.models_dict[which_model].load_state_dict(torch.load(file_path))
         self.display(f"Loaded '{which_model}' from: {file_path}")
+     
 
     def train_on_batch(self, 
                        batch_data: object, 
@@ -516,6 +518,7 @@ class DFMManager(object):
                  guide_temp:float=1.0, # Guidance temperature
                  batch_size:int=500,
                  predictor:torch.nn.Module=None,
+                 denoising_model:torch.nn.Module=None,
                  dataset: Optional[List[torch.Tensor]] = None,
                  ls_ratio:float=1.0,
                  radius:float=1.0,
@@ -608,12 +611,43 @@ class DFMManager(object):
 
         # Predictor-based guidance는 사용하지 않음
         predictor_log_prob = None
-
+     
         # Do flow-matching sampling
         if self.continuous_time:
             self.display("Sample using continuous-framework (DFM/DG).")
+            # return fm_utils.flow_matching_sampling(num_samples=num_samples, 
+            #                                        denoising_model=self.models_dict['denoising_model'],
+            #                                        S=self.cfg.data.S,
+            #                                        D=self.cfg.data.shape,
+            #                                        device=self.cfg.device,
+            #                                        dt=dt, 
+            #                                        mask_idx=self.mask_index,
+            #                                        pad_idx=self.pad_index,
+            #                                        batch_size=batch_size,
+            #                                        predictor_log_prob=None, 
+            #                                        # Do not use any conditional denoising model 
+            #                                        # (i.e. no predict-free guidance):
+            #                                        cond_denoising_model=cond_denoising_model,
+            #                                        guide_temp=guide_temp, 
+            #                                        stochasticity=stochasticity,
+            #                                        # Use Taylor-approximated guidance if 
+            #                                        # grad_approx=True, else don't:
+            #                                        use_tag=False,
+            #                                        argmax_final=self.cfg.sampler.argmax_final,
+            #                                        max_t=self.cfg.sampler.max_t,
+            #                                        x1_temp=self.cfg.sampler.x1_temp,
+            #                                        do_purity_sampling=self.cfg.sampler.do_purity_sampling,
+            #                                        purity_temp=self.cfg.sampler.purity_temp,
+            #                                        # 'train_num_tokens_freq_dict' is the distribution of the 
+            #                                        # number of unpadded tokens in the training set:
+            #                                        num_unpadded_freq_dict=self.cfg.data.get('train_num_tokens_freq_dict', None),
+            #                                        eps = 1e-9,
+            #                                        predictor=predictor,
+            #                                        dataset=dataset,
+            #                                        ls_ratio=ls_ratio,
+            #                                        radius=radius)   
             return fm_utils.flow_matching_sampling(num_samples=num_samples, 
-                                                   denoising_model=self.models_dict['denoising_model'],
+                                                   denoising_model=denoising_model,
                                                    S=self.cfg.data.S,
                                                    D=self.cfg.data.shape,
                                                    device=self.cfg.device,
