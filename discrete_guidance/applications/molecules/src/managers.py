@@ -366,6 +366,8 @@ class DFMManager(object):
         """
         # Extract x1
         x1 = batch_data['x'] # (B, D)
+        # conditional rate 을 직접 학습할 때 y label도 필요함
+        condition = batch_data['norm_reward']
         
         # Determine the loss
         if self.continuous_time:
@@ -375,7 +377,8 @@ class DFMManager(object):
                                                        mask_idx=self.mask_index, 
                                                        reduction='mean', 
                                                        pad_idx=self.pad_index, 
-                                                       loss_mask=None) # No explicit loss-mask required
+                                                       loss_mask=None,
+                                                       condition=condition) # No explicit loss-mask required
         else:
             # Within the discrete-time framework, determine the (masking) D3PM model loss
             return digress_utils.d3pm_loss_masking(denoising_model=self.models_dict['denoising_model'], 
@@ -515,7 +518,8 @@ class DFMManager(object):
                  predictor:torch.nn.Module=None,
                  dataset: Optional[List[torch.Tensor]] = None,
                  ls_ratio:float=1.0,
-                 radius:float=1.0) -> torch.tensor:
+                 radius:float=1.0,
+                 target_reward:float=None) -> torch.tensor:
         """
         Generate x-samples.
 
@@ -559,35 +563,51 @@ class DFMManager(object):
             utils.set_random_seed(seed)
 
         # If predictor_y_dict is empty, do not use any guidance (thus set predictor_log_prob to None)
-        if len(predictor_y_dict)==0:
-            predictor_log_prob = None
-        elif len(predictor_y_dict)==1:
-            predictor_model_name = list(predictor_y_dict.keys())[0]
-            if predictor_model_name in self.models_dict:
-                # Determine the predictor model, the name of the y-variable
-                # this predictor model was trained on, and the y-value
-                # specified to predictor-guide to.
-                predictor_model = self.models_dict[predictor_model_name]
-                y_name          = predictor_model.y_guide_name
-                y_value         = predictor_y_dict[predictor_model_name]
+        # if len(predictor_y_dict)==0:
+        #     predictor_log_prob = None
+        # elif len(predictor_y_dict)==1:
+        #     predictor_model_name = list(predictor_y_dict.keys())[0]
+        #     if predictor_model_name in self.models_dict:
+        #         # Determine the predictor model, the name of the y-variable
+        #         # this predictor model was trained on, and the y-value
+        #         # specified to predictor-guide to.
+        #         predictor_model = self.models_dict[predictor_model_name]
+        #         y_name          = predictor_model.y_guide_name
+        #         y_value         = predictor_y_dict[predictor_model_name]
 
-                # Define the predictor-model log-probability as function f(x_{t}, t)=log[p(y=y*|x_{t}, t)]
-                # with fixed/specified y=y* (=y_value)
-                # Remarks: (1) y_value is a scalar (i.e. the same for all batch points), but log_prob expects 
-                #              a tensorial y-input with a y-value per point in the batch (thus expand it).
-                #          (2) When using Taylor-approximated guidance (TAG) is used (grad_approx=True), xt is one-hot
-                #              encoded and used as input for the predictor log-probability (is_x_onehot=True).
-                #              For exact guidance (grad_approx=False), xt is a passed as discrete state vector 
-                #              to the predictor log-probability (is_x_onehot=False).
-                #              => As grad_approx=True/is_x_onehot=True and grad_approx=False/is_x_onehot=False, 
-                #                 one can pass grad_approx for is_x_onehot.
-                predictor_log_prob = lambda xt, t: predictor_model.log_prob({y_name: torch.tensor(y_value).to(xt.device).expand(xt.shape[0]), 'x': xt}, t, is_x_onehot=grad_approx)
-            else:
-                err_msg = f"The key '{predictor_model_name}' of input 'predictor_y_dict' does not correspond to the name of any of the (predictor) models: {list(self.models_dict.keys())}"
-                raise ValueError(err_msg)
+        #         # Define the predictor-model log-probability as function f(x_{t}, t)=log[p(y=y*|x_{t}, t)]
+        #         # with fixed/specified y=y* (=y_value)
+        #         # Remarks: (1) y_value is a scalar (i.e. the same for all batch points), but log_prob expects 
+        #         #              a tensorial y-input with a y-value per point in the batch (thus expand it).
+        #         #          (2) When using Taylor-approximated guidance (TAG) is used (grad_approx=True), xt is one-hot
+        #         #              encoded and used as input for the predictor log-probability (is_x_onehot=True).
+        #         #              For exact guidance (grad_approx=False), xt is a passed as discrete state vector 
+        #         #              to the predictor log-probability (is_x_onehot=False).
+        #         #              => As grad_approx=True/is_x_onehot=True and grad_approx=False/is_x_onehot=False, 
+        #         #                 one can pass grad_approx for is_x_onehot.
+        #         predictor_log_prob = lambda xt, t: predictor_model.log_prob({y_name: torch.tensor(y_value).to(xt.device).expand(xt.shape[0]), 'x': xt}, t, is_x_onehot=grad_approx)
+        #     else:
+        #         err_msg = f"The key '{predictor_model_name}' of input 'predictor_y_dict' does not correspond to the name of any of the (predictor) models: {list(self.models_dict.keys())}"
+        #         raise ValueError(err_msg)
+        # else:
+        #     err_msg = f"Guided generation is not implemented for more than 1 property."
+        #     raise ValueError(err_msg)
+        if target_reward is not None:
+            # 오케이 제대로 들어갔네
+            print("=" * 50)
+            print(self.cfg.data.reward_mean, self.cfg.data.reward_std)
+            # Normalize target reward
+            normalized_target = (target_reward - self.cfg.data.reward_mean) / self.cfg.data.reward_std
+            # Conditional denoising model wrapper
+            def cond_denoising_model(xt, t):
+                B = xt.shape[0]
+                condition = torch.full((B, 1), normalized_target, device=xt.device)
+                return self.denoising_model(xt, t, condition)
         else:
-            err_msg = f"Guided generation is not implemented for more than 1 property."
-            raise ValueError(err_msg)
+            cond_denoising_model = None
+
+        # Predictor-based guidance는 사용하지 않음
+        predictor_log_prob = None
 
         # Do flow-matching sampling
         if self.continuous_time:
@@ -601,15 +621,15 @@ class DFMManager(object):
                                                    mask_idx=self.mask_index,
                                                    pad_idx=self.pad_index,
                                                    batch_size=batch_size,
-                                                   predictor_log_prob=predictor_log_prob, 
+                                                   predictor_log_prob=None, 
                                                    # Do not use any conditional denoising model 
                                                    # (i.e. no predict-free guidance):
-                                                   cond_denoising_model=None,
+                                                   cond_denoising_model=cond_denoising_model,
                                                    guide_temp=guide_temp, 
                                                    stochasticity=stochasticity,
                                                    # Use Taylor-approximated guidance if 
                                                    # grad_approx=True, else don't:
-                                                   use_tag=grad_approx,
+                                                   use_tag=False,
                                                    argmax_final=self.cfg.sampler.argmax_final,
                                                    max_t=self.cfg.sampler.max_t,
                                                    x1_temp=self.cfg.sampler.x1_temp,
@@ -628,9 +648,9 @@ class DFMManager(object):
             self.display("Remark: The input arguments 'dt' and 'stochasticity' are not used in this framework.")
             # In case of guidance, DiGress uses the 'gradient-approximation', thus check that the user specified this right
             # Remark: If predictor_y_dict={} (default) we are using unconditional generation and the grad_approx does not matter.
-            if predictor_y_dict!={} and grad_approx==False:
-                err_msg = f"Guided generation using the discrete-framework (i.e. with DiGress) requires the gradient approximation, but 'grad_approx=False' has been passed to the method 'generate'. Pass 'grad_approx=True' instead.."
-                raise ValueError(err_msg)
+            # if predictor_y_dict!={} and grad_approx==False:
+            #     err_msg = f"Guided generation using the discrete-framework (i.e. with DiGress) requires the gradient approximation, but 'grad_approx=False' has been passed to the method 'generate'. Pass 'grad_approx=True' instead.."
+            #     raise ValueError(err_msg)
 
             return digress_utils.d3pm_sampling(denoising_model=self.models_dict['denoising_model'], 
                                                num_samples=num_samples, # For this method, batch_size corresponds to num_samples

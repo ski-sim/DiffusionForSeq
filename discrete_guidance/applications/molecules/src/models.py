@@ -78,6 +78,27 @@ class DenoisingModel_CNN(torch.nn.Module):
         self.eps = float(cfg.denoising_model.get('eps', 1e-8))
         self.stack_time = cfg.denoising_model.get('stack_time', True)
         
+        # add cfg for classifier-free
+        self.p_uncond = cfg.training.denoising_model.get('p_uncond', 0.1)
+        self.condition_dim = cfg.denoising_model.get('condition_dim', 16)
+        
+        self.condition_encoder = nn.Sequential(
+            nn.Linear(1, self.condition_dim),
+            nn.ReLU(),
+            nn.Linear(self.condition_dim, self.condition_dim),
+            nn.ReLU(),
+            nn.Linear(self.condition_dim, self.hidden_dim)
+        )
+        
+        self.time_cond_embedder = nn.Sequential(
+            nn.Linear(self.hidden_dim * 2, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.hidden_dim)
+        )
+        
+        self.uncond_embedding = nn.Parameter(torch.randn(self.hidden_dim))
+        
+        
         self.display(f"CNN Denoising Model - D: {self.D}, S: {self.S}")
         self.display(f"Stack time to x as CNN denoising model input: {self.stack_time}")
 
@@ -183,7 +204,8 @@ class DenoisingModel_CNN(torch.nn.Module):
 
     def forward(self, 
                 xt: torch.tensor, 
-                t: torch.tensor) -> torch.tensor:
+                t: torch.tensor,
+                condition: Optional[torch.tensor] = None) -> torch.tensor:
         """
         Define forward pass of the CNN denoising model.
         
@@ -196,6 +218,24 @@ class DenoisingModel_CNN(torch.nn.Module):
         """
         # Extract the batch size
         B = xt.shape[0]
+        device = xt.device
+        
+        # Encode the input sequence xt
+        if condition is not None:
+            if len(condition.shape) == 1:
+                # If condition is a single value, expand it to match batch size
+                condition = condition.unsqueeze(-1)
+            
+            # 휴 다행히 p_uncond는 여기 있었네
+            if self.training:
+                uncond_mask = torch.rand(B, device=device) < self.p_uncond
+                cond_emb = self.condition_encoder(condition)
+                cond_emb[uncond_mask] = self.uncond_embedding
+            else:
+                cond_emb = self.condition_encoder(condition)
+        else:
+            cond_emb = self.uncond_embedding.unsqueeze(0).repeat(B, 1)
+        
 
         # One-hot encode the input
         if len(xt.shape) == 3:
@@ -208,6 +248,10 @@ class DenoisingModel_CNN(torch.nn.Module):
         # Time embedding
         time_emb = F.relu(self.time_embedder(t))  # (B, hidden_dim)
         
+        time_cond_emb = self.time_cond_embedder(
+            torch.cat([time_emb, cond_emb], dim=-1)  # Concatenate time and condition embeddings
+        )
+        
         # Convert to conv1d format: (B, S, D)
         feat = seq_encoded.permute(0, 2, 1)  # (B, S, D)
         feat = F.relu(self.linear(feat))      # (B, hidden_dim, D)
@@ -218,7 +262,7 @@ class DenoisingModel_CNN(torch.nn.Module):
             
             # Add time conditioning
             if self.stack_time:
-                time_cond = self.time_layers[i](time_emb)[:, :, None]  # (B, hidden_dim, 1)
+                time_cond = self.time_layers[i](time_cond_emb)[:, :, None]  # (B, hidden_dim, 1)
                 h = h + time_cond  # Broadcast along sequence dimension
             
             # Layer normalization (need to transpose for LayerNorm)

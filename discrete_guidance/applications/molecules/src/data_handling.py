@@ -113,6 +113,7 @@ class MoleculesDataHandler(object):
         for set_name, subset_df in self.subset_df_dict.items():
             # Encode the nswcs as matrix for the current set
             encoded_sequence_matrix = np.vstack([self.smiles_encoder(sequence) for sequence in subset_df['sequence']])
+            norm_reward = np.array(subset_df['normalized_reward'])
             # encoded_nswcs_matrix = np.vstack([self.smiles_encoder(nswcs) for nswcs in subset_df['nswcs']])
             
             # Other data attributes
@@ -120,7 +121,8 @@ class MoleculesDataHandler(object):
 
             # Construct the dict-dataset
             torch_dataset = DictDataset(x=torch.tensor(encoded_sequence_matrix, dtype=torch.int), 
-                                        **set_attributes_dict)
+                                        **set_attributes_dict,
+                                        norm_reward = torch.tensor(norm_reward, dtype=torch.float32))
             self.torch_dataset_dict[set_name] = torch_dataset
 
         # Fit the distribution of the properties specified in 'self.torch_data_property_names'

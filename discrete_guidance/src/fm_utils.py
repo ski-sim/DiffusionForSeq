@@ -194,6 +194,7 @@ def flow_matching_sampling_masking_euler(
         mask_idx = S - 1
 
     B = batch_size
+    # ls_ratio = 0.5
     n_local = int(B * ls_ratio)   # local_search 비율에 해당하는 개수 
     n_random = B - n_local            
     # local search sampling
@@ -246,14 +247,14 @@ def flow_matching_sampling_masking_euler(
         # This is the unconditional prediction
         # If denoising model trained unconditionally, it doesn't use the cls input
         # If it is trained conditionally, this is the index of the unconditional class
-        logits = denoising_model(xt, t * torch.ones((B,), device=device))  # (B, D, S)
+        logits = denoising_model(xt, t * torch.ones((B,), device=device), condition=None)  # (B, D, S)
         pt_x1_probs = F.softmax(logits / x1_temp, dim=-1)  # (B, D, S)
 
         # If cls free guidance, also get the conditional prediction for the
         # class we want to guide towards
         # p(x1 | xt, y)
         if cond_denoising_model is not None:
-            logits_cond = cond_denoising_model(xt, t * torch.ones((B,), device=device))
+            logits_cond = cond_denoising_model(xt, t * torch.ones((B,), device=device))  # (B, D, S)
             pt_x1_probs_cond = F.softmax(logits_cond / x1_temp, dim=-1)
 
         # Compute the rates and the probabilities
@@ -329,15 +330,16 @@ def flow_matching_sampling_masking_euler(
 
         # Perform predictor guidance by adjusting the unconditional rates
         if predictor_log_prob is not None:
-            R_t = get_guided_rates(
-                predictor_log_prob,
-                xt,
-                t,
-                R_t,
-                S,
-                use_tag=use_tag,
-                guide_temp=guide_temp,
-            )
+            # R_t = get_guided_rates(
+            #     predictor_log_prob,
+            #     xt,
+            #     t,
+            #     R_t,
+            #     S,
+            #     use_tag=use_tag,
+            #     guide_temp=guide_temp,
+            # )
+            assert False
 
         # Perform predictor-free guidance by using both the unconditional and conditional rates
         if cond_denoising_model is not None:
@@ -357,6 +359,7 @@ def flow_matching_sampling_masking_euler(
         R_t.scatter_(-1, xt[:, :, None], 0.0)
         R_t.scatter_(-1, xt[:, :, None], (-R_t.sum(dim=-1, keepdim=True)))
 
+        # This is transition probability
         # Obtain probabilities from the rates
         step_probs = (R_t * dt).clamp(min=0.0, max=1.0)
         step_probs.scatter_(-1, xt[:, :, None], 0.0)
@@ -543,6 +546,7 @@ def flow_matching_loss_masking(
     pad_idx: Optional[int] = None,
     loss_mask: Optional[torch.Tensor] = None,
     label_smoothing: float = 0.0,
+    condition: Optional[torch.Tensor] = None
 ) -> torch.Tensor:
     """Computes flow matching cross entropy loss for masked denoising.
 
@@ -566,7 +570,7 @@ def flow_matching_loss_masking(
     xt = sample_xt(x1, t, mask_idx, pad_idx)
 
     # Get model predictions
-    logits = denoising_model(xt, t)  # (B, D, S)
+    logits = denoising_model(xt, t, condition)  # (B, D, S)
 
     # Create mask for positions to exclude from loss:
     # - Positions that are not masked in xt (already revealed)

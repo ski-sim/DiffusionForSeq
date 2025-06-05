@@ -137,9 +137,9 @@ parser.add_argument("--max_radius", default=0.5, type=float) #* for L >= 50, use
 parser.add_argument("--K", default=25, type=int)
 parser.add_argument("--gen_batch_size", default=16, type=int)
 
-parser.add_argument("--guide_temp", default=0.5, type=float)
-parser.add_argument("--percentile", default=2, type=float)
-parser.add_argument("--percentile_coeff", default=2, type=float)
+parser.add_argument("--guide_temp", default=1.0, type=float)
+parser.add_argument("--percentile", default=0.7, type=float)
+parser.add_argument("--percentile_coeff", default=1.1, type=float)
 parser.add_argument("--sigma_coeff", default=5, type=float)
 parser.add_argument("--diffusion_temp", default=1, type=float)
 
@@ -147,8 +147,8 @@ parser.add_argument("--additional_reward", default=0, type=float)
 parser.add_argument("--max_reward", default=1.1, type=float)
 
 parser.add_argument("--various_guide_temp", action="store_true")
-parser.add_argument("--guide_temp_min", default=0.1, type=float)
-parser.add_argument("--guide_temp_max", default=0.5, type=float)
+parser.add_argument("--guide_temp_min", default=1.0, type=float)
+parser.add_argument("--guide_temp_max", default=1.0, type=float)
 
 #for debugging
 parser.add_argument("--num_valid_molecule_samples", default=128, type=int)

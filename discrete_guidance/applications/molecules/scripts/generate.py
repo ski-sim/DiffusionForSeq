@@ -48,6 +48,14 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     generation_cfg.sampler.guide_temp = args.guide_temp #* argument로 받은 guidetemp로 삽입입
     generation_cfg.seed = args.seed
     generation_cfg.sampler.x1_temp = args.diffusion_temp
+    
+    sequences, scores = dataset.get_all_data(return_as_str=False)
+    score_mean = np.mean(scores)
+    score_std = np.std(scores)
+    
+    # 여기서 문제가 생긴듯
+    # generation_cfg.data.reward_mean = score_mean
+    # generation_cfg.data.reward_std = score_std
 
     # Deepcopy the original cfg
     original_generation_cfg = copy.deepcopy(generation_cfg)
@@ -130,8 +138,12 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     # manager.models_dict = {
     #     'denoising_model': denoising_model,'waiting_model': waiting_model, 'num_rings_predictor_model': num_rings_predictor_model, 'num_tokens_predictor_model': num_tokens_predictor_model, 'logp_predictor_model': logp_predictor_model, 'num_heavy_atoms_predictor_model': num_heavy_atoms_predictor_model
     orchestrator.manager.load_all_models()
+    # orchestrator.manager.load_model('denoising_model')
+    
 
     # Update the generation configurations without overwriting entries
+    # 여기서 dict1에 없는 것만 append하는데 data를 만들어놓으니까 문제 발생
+    # 그러면 애초에 train 폴더에 있는 config.yaml에 normalizing data를 넣을까?
     config_handling.update_without_overwrite(generation_cfg, orchestrator.cfg)
 
     # Update the directoris in the generation config file
@@ -139,11 +151,19 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
 
     # Update the 'save_figs' flag
     generation_cfg.save_figs = True
+    
+    # 이게 쓰이는 부분이 필요한데 아하 manager를 새로 만들때 포함되서 mg.generate에 쓰인다. 
+    # 들어가는거 확인
+    generation_cfg.data.reward_mean = score_mean
+    generation_cfg.data.reward_std = score_std
 
     # Define manager for evaluation with trained model
+    # 여기서 manager를 한번 더 만들어주는 이유는 generation_cfg가 update되었기 때문
     eval_manager = managers.DFMManager(generation_cfg, 
                                        denoising_model=orchestrator.manager.denoising_model,
-                                       predictor_models_dict=orchestrator.manager.predictor_models_dict)
+                                       predictor_models_dict=orchestrator.manager.predictor_models_dict
+                                    #    predictor_models_dict={}
+                                       )
 
     # Log the overrides
     logger.info(f"Overrides: {overrides}")
@@ -171,9 +191,24 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     global_start_time    = time.time()
     logger.info(f"Will generate sequences are at least {num_uvnswcs_requested} sequences have been sampled.")
     total_x_generated = []
+    
+    # needed for excluding unvalid samples
+    vocab_sizes = {
+    'tfbind': 4,
+    'rna1': 4,
+    'rna2': 4, 
+    'rna3': 4,
+    'amp': 2,
+    'gfp': 20,
+    'aav': 20
+    }
+    mask_idx = vocab_sizes.get(args.task, 4)
+    
+    
     for iteration in range(generation_cfg.sampler.max_iterations):
+        # 너무 짜치는데?
         if args.additive_guide_temp:
-            generation_cfg.sampler.guide_temp = args.guide_temp_min + iteration * args.additive_guide_temp
+            generation_cfg.sampler.guide_temp = min(args.guide_temp_min + iteration * args.additive_guide_temp, 2.0)
             print(f"generation_cfg.sampler.guide_temp: {generation_cfg.sampler.guide_temp}")
         # If no property is specified, use unconditional sampling
         if target_property_value is None:
@@ -184,7 +219,8 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
                                                 batch_size=generation_cfg.sampler.batch_size,
                                                 predictor = predictor,
                                                 dataset=dataset,
-                                                ls_ratio=ls_ratio)
+                                                ls_ratio=ls_ratio,
+                                                target_reward=target_property_value,)
         else:
             # Construct the predictor model name based on the property name
             predictor_model_name = f"{property_name}_predictor_model"
@@ -195,9 +231,8 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
                 err_msg = f"There is no predictor model with name '{predictor_model_name}'. Allowed predictor models are: {list(orchestrator.manager.models_dict.keys())}"
                 raise ValueError(err_msg)
 
-            # 현재시각 20:48 여기까지 왔다.
+            # 현재시각 06/05 00:47 여기까지 왔다.
             # Here we use generation cfg
-           
             x_generated = eval_manager.generate(num_samples=generation_cfg.sampler.batch_size, #500, 
                                                 seed=None, # Only use the external seed
                                                 stochasticity=generation_cfg.sampler.noise,
@@ -209,41 +244,92 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
                                                 predictor = predictor,
                                                 dataset=dataset,
                                                 ls_ratio=ls_ratio,
-                                                radius=radius)
+                                                radius=radius,
+                                                target_reward=target_property_value)
 
          
         # for proxy evaluation
         total_x_generated.append(x_generated)
+        
+        valid_samples = []
+        for sample in x_generated:
+            sample_np = sample.cpu().numpy() if torch.is_tensor(sample) else sample
+            if mask_idx not in sample_np:
+                valid_samples.append(sample)
+            else:
+                logger.warning(f"Found mask token in generated sample, skipping: {sample_np}")
+        
         # Analyze the generated x
         # filtering here?
         
         # Decode the generated x to smiles (int->smiles)
-        generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(smiles_encoded)) for smiles_encoded in x_generated]
+        # generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(smiles_encoded)) for smiles_encoded in x_generated]
+        generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(smiles_encoded)) for smiles_encoded in valid_samples]
 
         generated_df_list.extend(generated_smiles_list)
         
         # if len(generated_df_list) > num_uvnswcs_requested  :
+        # if not args.filter:
+        #     args.K = 1
+        # if len(generated_df_list) >= num_uvnswcs_requested * args.K :
+        #     if  not args.filter:
+        #         generated_df_list = generated_df_list[:num_uvnswcs_requested]
+        #     else:
+        #         total_x = np.vstack(total_x_generated)[:num_uvnswcs_requested * args.K, :]
+        #         batch_data_t = {}
+        #         if isinstance(total_x, np.ndarray):
+        #             x = torch.from_numpy(total_x).to(args.device)
+        #         else:
+        #             x = total_x
+        #         batch_data_t['x'] = x
+        #         t =  torch.ones(len(total_x), dtype=torch.long).to(args.device)
+        #         vals_proxy = predictor(batch_data_t, t ,is_x_onehot=False)
+        #         vals_proxy = vals_proxy.detach().cpu().numpy()
+        #         total_x = total_x[np.argsort(vals_proxy)[-num_uvnswcs_requested:], :]
+        #         generated_df_list = list()
+        #         for x in total_x:
+        #             generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(x))]
+        #             generated_df_list.extend(generated_smiles_list)
+        #     break
+        
+        # 06/02 invalid sample removal
         if not args.filter:
             args.K = 1
-        if len(generated_df_list) >= num_uvnswcs_requested * args.K :
-            if  not args.filter:
+        if len(generated_df_list) >= num_uvnswcs_requested * args.K:
+            if not args.filter:
                 generated_df_list = generated_df_list[:num_uvnswcs_requested]
             else:
-                total_x = np.vstack(total_x_generated)[:num_uvnswcs_requested * args.K, :]
-                batch_data_t = {}
-                if isinstance(total_x, np.ndarray):
-                    x = torch.from_numpy(total_x).to(args.device)
+                # total_x_generated를 flat하게 만들되, mask token이 있는 샘플은 제외
+                valid_total_x = []
+                for batch in total_x_generated:
+                    for sample in batch:
+                        sample_np = sample.cpu().numpy() if torch.is_tensor(sample) else sample
+                        if mask_idx not in sample_np:
+                            valid_total_x.append(sample_np)
+                
+                # 충분한 샘플이 있는지 확인
+                if len(valid_total_x) >= num_uvnswcs_requested * args.K:
+                    total_x = np.vstack(valid_total_x[:num_uvnswcs_requested * args.K])
+                    
+                    batch_data_t = {}
+                    if isinstance(total_x, np.ndarray):
+                        x = torch.from_numpy(total_x).to(args.device)
+                    else:
+                        x = total_x
+                    batch_data_t['x'] = x
+                    t = torch.ones(len(total_x), dtype=torch.long).to(args.device)
+                    vals_proxy = predictor(batch_data_t, t, is_x_onehot=False)
+                    vals_proxy = vals_proxy.detach().cpu().numpy()
+                    total_x = total_x[np.argsort(vals_proxy)[-num_uvnswcs_requested:], :]
+                    
+                    generated_df_list = list()
+                    for x in total_x:
+                        generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(x))]
+                        generated_df_list.extend(generated_smiles_list)
+                    break
                 else:
-                    x = total_x
-                batch_data_t['x'] = x
-                t =  torch.ones(len(total_x), dtype=torch.long).to(args.device)
-                vals_proxy = predictor(batch_data_t, t ,is_x_onehot=False)
-                vals_proxy = vals_proxy.detach().cpu().numpy()
-                total_x = total_x[np.argsort(vals_proxy)[-num_uvnswcs_requested:], :]
-                generated_df_list = list()
-                for x in total_x:
-                    generated_smiles_list = [orchestrator.molecules_data_handler.smiles_encoder.decode(utils.to_numpy(x))]
-                    generated_df_list.extend(generated_smiles_list)
+                    logger.info(f"Not enough valid samples yet. Have {len(valid_total_x)}, need {num_uvnswcs_requested * args.K}")
+                    continue
             break
         
     seen_seqs = set()
@@ -255,9 +341,27 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     args.total_x_uniqueness = total_x_uniqueness
 
     # # stack generated samples , shape (500, 8)
-    if not args.filter:
-        total_x  = np.vstack(total_x_generated)[:num_uvnswcs_requested, :]
+    # if not args.filter:
+    #     total_x  = np.vstack(total_x_generated)[:num_uvnswcs_requested, :]
     
+    if not args.filter:
+        valid_total_x = []
+        for batch in total_x_generated:
+            for sample in batch:
+                sample_np = sample.cpu().numpy() if torch.is_tensor(sample) else sample
+                if mask_idx not in sample_np:
+                    valid_total_x.append(sample_np)
+        
+        if len(valid_total_x) >= num_uvnswcs_requested:
+            total_x = np.vstack(valid_total_x[:num_uvnswcs_requested])
+        else:
+            logger.error(f"Not enough valid samples! Got {len(valid_total_x)}, needed {num_uvnswcs_requested}")
+            # 부족한 경우 있는 것만 사용
+            total_x = np.vstack(valid_total_x)
+    
+    # print(f"total_x {total_x}")
+    for x in total_x:
+        print(f"x {x}")
     # evaluate the generated samples by oracle
     total_x = total_x.astype(int)
     vals = oracle(total_x).reshape(-1)
@@ -274,92 +378,6 @@ def diffusion_sample(args, predictor, oracle, round, dataset, ls_ratio, radius,t
     
     # total_X를 다시 generated_df_list로 바꿈
     
-    
-    
-        # filtering duplicated or invalid smiles
-    #     analysis_dict = utils.analyze_generated_smiles(generated_smiles_list, 
-    #                                                    orchestrator.molecules_data_handler.subset_df_dict['train']['nswcs'],
-    #                                                    pad_token=orchestrator.molecules_data_handler.pad_token,
-    #                                                    logger=logger)
-
-    #     # Construct a table with the generated molecules
-    #     iter_dict = collections.defaultdict(list)
-    #     for x, smiles in zip(x_generated, generated_smiles_list):    
-    #         # Get the validity
-    #         valid = (smiles in analysis_dict['unique_valid_gen_smiles_list'])
-
-    #         # If the smiles is not valid, continue to next smiles
-    #         if valid==False:
-    #             continue
-
-    #         # Determine the nswcs
-    #         # Remark: This is only possible for valid molecules (hence do this after the validation filter above)!
-    #         nswcs = analysis_dict['smiles_to_nswcs_map'][smiles]
-
-    #         # Append to corresponding lists
-    #         iter_dict['smiles'].append(smiles)
-    #         iter_dict['valid'].append(valid)
-    #         iter_dict['nswcs'].append(nswcs)
-
-    #         # If a property has been defined, determine the property value(s) of the generated molecule 
-    #         if property_name!='None':
-    #             # 우린 이걸 시뮬레이션 통하지 않고는 죽어도 모르니까 이걸 그냥 저장하면 되겠네
-    #             # invalid샘플 제외하고
-    #             # Determine the ground truth (using RDKit) property value
-    #             ground_truth_property_value = cheminf.get_property_value(smiles, property_name=property_name)
-
-    #             # Construct the predictor model name based on the property name
-    #             predictor_model_name = f"{property_name}_predictor_model"
-    #             logger.info(f"Predictor model name: {predictor_model_name}")
-
-    #             # Predict the property value using the corresponding predictor model
-    #             predicted_property_value = orchestrator.manager.predict_property(predictor_model_name, x=x, t=1, return_probs=False)
-
-    #             # Append to corresponding lists
-    #             if target_property_value is None:
-    #                 iter_dict[f"target_{property_name}"].append('None')
-    #             else:
-    #                 iter_dict[f"target_{property_name}"].append(target_property_value)
-    #             iter_dict[f"predicted_{property_name}"].append(predicted_property_value)
-    #             iter_dict[f"ground_truth_{property_name}"].append(ground_truth_property_value)
-
-    #     # Transform the dictionary of lists to a pandas.DataFrame
-    #     iter_df = pd.DataFrame(iter_dict)
-        
-    #     # Make the iter_dict a pandas DataFrame and append it to the corresponding list
-    #     generated_df_list.append(pd.DataFrame(iter_dict))
-
-    #     # Update the list of unique valid nswcs (uvnswcs)
-    #     if 0<len(iter_df): # If there were no molecules in this iteration, we cannot update
-    #         filtered_df = iter_df[iter_df['valid']==True]
-    #         sampled_uvnswcs_list += list(set(filtered_df['nswcs']))
-    #         sampled_uvnswcs_list = list(set(sampled_uvnswcs_list))
-
-    #     # Determine the number of sampled unique valid nswcs (uvnswcs)
-    #     num_sampled_uvnswcs = len(sampled_uvnswcs_list)
-
-    #     if logger is None:
-    #         print(f"[{iteration}] Number of already sampled unique valid nswcs: {num_sampled_uvnswcs} (Duration since start: {(time.time()-global_start_time)/60:.2f}min)")
-    #         print('-'*100)
-    #     else:
-    #         logger.info(f"[{iteration}] Number of already sampled unique valid nswcs: {num_sampled_uvnswcs} (Duration since start: {(time.time()-global_start_time)/60:.2f}min)")
-    #         logger.info('-'*100)
-
-    #     tensorboard_writer.add_scalar(f"{property_name}/Num-sampled-molecules", num_sampled_uvnswcs, iteration)
-
-    #     # If the number of unique valid generated nswcs exceeds the requestes number, 
-    #     # halt generation
-        
-    #     if num_uvnswcs_requested<=num_sampled_uvnswcs:
-    #         break
-
-    # logger.info(f"Generated at least {num_uvnswcs_requested} valid molecules. Duration: {(time.time()-global_start_time)/60:.2f}min")
-
-    # # Stack the DataFrames in the list 'generated_df_list' to obtain one big DataFrame
-    # generated_df = pd.concat(generated_df_list)
-
-    # # Only keep the first 'args.num_valid_molecule_samples' samples
-    # generated_df = generated_df[:args.num_valid_molecule_samples]
 
     # Save this DataFrame
     file_name = f'samples_table_t{generation_cfg.sampler.guide_temp}_w{target_property_value}_n{num_uvnswcs_requested}_r{round}.tsv'

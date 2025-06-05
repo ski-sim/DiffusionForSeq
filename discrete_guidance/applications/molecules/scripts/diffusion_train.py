@@ -4,6 +4,7 @@ import copy
 import matplotlib.pyplot as plt
 from pathlib import Path
 import pandas as pd
+import numpy as np
 
 import csv
 
@@ -83,21 +84,27 @@ def diffusion_train(args, round_idx, dataset):
     #                           base_dir=cfg.base_dir)
     # print(cfg.base_dir)
     # print(cfg.data.which_dataset)
+    # 앞으로 여기에 proxy score도 return 되도록 get_all_data 함수를 바꿔야지
+    # 그리고 proxy_score로 unnormalized된 score를 구해야함
     sequences, scores = dataset.get_all_data(return_as_str=False)
     # sequences = dataset.train
     # scores = dataset.train_scores
+    score_mean = np.mean(scores).item()
+    score_std = np.std(scores).item()
+    normalized_scores = (scores - score_mean) / score_std +1e-8
+    
     
     csv_data = []
     if args.task in ['aav', 'gfp', 'tfbind', 'rna1', 'rna2', 'rna3']:#* preprocessed with ' ' separation.  predictor train에서도 고쳐줘야함.
         cfg.data.preprocessing.over_ten_unique_tokens = True
-        for seq, score in zip(sequences, scores):
+        for seq, score, norm_score in zip(sequences, scores, normalized_scores):
             sequence = ' '.join([str(i) for i in seq])
-            csv_data.append([sequence, float(score)])
+            csv_data.append([sequence, float(score), float(norm_score)])
     else:
         cfg.data.preprocessing.over_ten_unique_tokens = False
-        for seq, score in zip(sequences, scores):
+        for seq, score, norm_score in zip(sequences, scores, normalized_scores):
             sequence = "".join(map(str, seq))
-            csv_data.append([sequence, float(score)])
+            csv_data.append([sequence, float(score), float(norm_score)])
 
 
     # for seq, score in zip(sequences, scores):
@@ -111,17 +118,25 @@ def diffusion_train(args, round_idx, dataset):
         
         
     # df = pd.DataFrame(csv_data)
+    
+    
 
     sequence_data_path =f'../discrete_guidance/applications/molecules/data/preprocessed/sequence_preprocessed_dataset_{args.task}_{args.now}.csv'
     args.preprocessed_dataset_path = sequence_data_path
     # df.to_csv(sequence_data_path, sep='\t', index=False)
     with open(sequence_data_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f, delimiter=",")
-        writer.writerow(["sequence", "reward"])
+        writer.writerow(["sequence", "reward", "normalized_reward"])  # Write header
         writer.writerows(csv_data)
     # logger.info(f"Created sequence dataset for round {round} at {sequence_data_path}")
     ##############################################################################
-
+    # 여기서 normalizer의 주요 parameter를 training config에 넣어주면
+    # 나중에 sampling할때 generation config가 training config를 override하며 이 정보를 쓰게 됨
+    # 이게 반영이 안되는듯
+    cfg.data.reward_mean = score_mean
+    cfg.data.reward_std = score_std
+    # 이거 지금 안쓰나?
+    cfg.training.denoising_model.p_uncond = 0.1
     
     # Generate orchestrator from cfg
     # Remark: This will update cfg
