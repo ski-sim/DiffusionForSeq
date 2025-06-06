@@ -32,7 +32,7 @@ from utils import  initialize_config, setup_directories, preprocess_dataset, sav
 def diffusion_train(args, round_idx, dataset, cfg, orchestrator, logger, batch_off = None):
     if batch_off is not None:
         dataset_off = copy.deepcopy(dataset)
-        dataset_off.resample_dataset_with_weighted_sample(n=1000, rank_coefficient=0.01)
+        # dataset_off.resample_dataset_with_weighted_sample(n=1000, rank_coefficient=0.01)
         dataset_off.add_train(batch_off)
         
         

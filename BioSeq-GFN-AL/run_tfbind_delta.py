@@ -735,6 +735,7 @@ def train(args, oracle, dataset):  # runner.run()
     # args.logger.set_context("iter_0")
     # predictor 빌드
     # predictor 훈련
+    K = args.K
     rst = None
     PERCENTILE = args.percentile
     #* diffusion settings
@@ -833,21 +834,20 @@ def train(args, oracle, dataset):  # runner.run()
             
             print("+++++++++++++++++++diffusion training done+++++++++++++")
         else:
-            i=0
-            while i<2:
-                args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
-                args.num_valid_molecule_samples = 2000
-                batch_off, proxy_score = diffusion_sample(args,denoising_model, predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
-                print("+++++++++++++++++++off-policy sampling done+++++++++++++")
-                args.model = 'denoising_model'
-                
-                temp_denoising_model = diffusion_train(args, round_idx, dataset, cfg, orchestrator, logger,batch_off)
-                
-                print("+++++++++++++++++++off-policy training done+++++++++++++")
-                
-                i+=1
+            args.K = 1
+            args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
+            args.num_valid_molecule_samples = dataset.train_added + dataset.val_added
+            print(dataset.train_added + dataset.val_added)
+            batch_off, proxy_score = diffusion_sample(args,denoising_model, predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
+            print("+++++++++++++++++++off-policy sampling done+++++++++++++")
+            args.model = 'denoising_model'
+            
+            temp_denoising_model = diffusion_train(args, round_idx, dataset, cfg, orchestrator, logger,batch_off)
+            
+            print("+++++++++++++++++++off-policy training done+++++++++++++")
+            
             denoising_model = temp_denoising_model
-     
+        args.K = K
         args.config = '../discrete_guidance/applications/molecules/config_files/generation_defaults.yaml'
         args.num_valid_molecule_samples = 128
         batch, proxy_score = diffusion_sample(args,denoising_model, predictor, oracle, round=round_idx, dataset=dataset, ls_ratio=args.ls_ratio, radius=radius,target_property_value=target_property_value)
